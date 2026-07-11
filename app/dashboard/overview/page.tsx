@@ -1,0 +1,76 @@
+"use client";
+
+import { FC } from "react";
+import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { WillOverview } from "@/app/components/dashboard/overview/WillOverview";
+import { VaultVisual } from "@/app/components/homePage/VaultVisual";
+import { LifecycleFlow } from "@/app/components/dashboard/overview/LifecycleFlow";
+import { ContextFlowDiagram } from "@/app/components/dashboard/overview/ContextFlowDiagram";
+import { bytesToCid } from "@/lib/anchor";
+import { PlaceholderTab } from "@/app/components/dashboard/shared/DashboardTabs";
+import { useRouter } from "next/navigation";
+
+function statusOf(status: object): string {
+  return Object.keys(status)[0] ?? "unknown";
+}
+
+const OverviewPage: FC = () => {
+  const { data, vault } = useDashboard();
+  const router = useRouter();
+  const will = data?.will ?? null;
+
+  if (!will) {
+    return (
+      <PlaceholderTab
+        setActiveTab={() => router.push("/dashboard/settings")}
+      />
+    );
+  }
+
+  const firstCid = data?.media?.[0]
+    ? bytesToCid(data.media[0].account.ipfsCid)
+    : null;
+  const firstBeneficiary = data?.beneficiaries?.[0]?.account?.wallet ?? null;
+
+  return (
+    <div className="grid grid-cols-1 lg:grid-cols-[1.95fr_1.05fr] gap-8 items-start animate-fade-in">
+      <div className="flex flex-col gap-6">
+        <WillOverview data={data!} />
+        <LifecycleFlow />
+        <ContextFlowDiagram />
+      </div>
+
+      <div className="flex flex-col gap-6 lg:sticky lg:top-20">
+        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] self-start mb-2 pl-1">
+            Active Vault Visualizer
+          </h3>
+          <div className="w-full scale-95 sm:scale-100 origin-center">
+            <VaultVisual
+              ownerKey={vault.publicKey}
+              status={statusOf(will.willStatus)}
+              mediaCount={will.mediaCount}
+              beneficiaryCount={will.beneficiaryCount}
+              lastInactivity={will.lastActiveAt.toNumber()}
+              inactivityThreshold={will.inactivityThreshold.toNumber()}
+              firstCid={firstCid}
+              firstBeneficiary={firstBeneficiary}
+            />
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-5 glass">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--warn)]">
+            Trustless Architecture
+          </h3>
+          <p className="mt-2.5 text-xs text-muted leading-relaxed">
+            No third party can modify your will settings or preview files. All
+            data flows peer-to-peer and through decentralized networks.
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default OverviewPage;
