@@ -1,17 +1,13 @@
 "use client";
 
 import { FC } from "react";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import { BeneficiaryManager } from "@/app/components/dashboard/beneficiary/BeneficiaryManager";
 import { PlaceholderTab } from "@/app/components/dashboard/shared/DashboardTabs";
 import { useRouter } from "next/navigation";
 
-function statusOf(status: object): string {
-  return Object.keys(status)[0] ?? "unknown";
-}
-
 const BeneficiariesPage: FC = () => {
-  const { data, refresh } = useDashboard();
+  const { data, refresh, isActive } = useDashboard();
   const router = useRouter();
   const will = data?.will ?? null;
 
@@ -29,7 +25,7 @@ const BeneficiariesPage: FC = () => {
         refresh={refresh}
         beneficiaries={data?.beneficiaries ?? []}
         totalBps={will.totalAllocatedPercentage}
-        isActive={statusOf(will.willStatus) === "active"}
+        isActive={isActive}
       />
     </div>
   );

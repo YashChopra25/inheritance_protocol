@@ -1,18 +1,15 @@
 "use client";
 
 import { FC } from "react";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import { PlaceholderTab } from "@/app/components/dashboard/shared/DashboardTabs";
+import { WillSetupChecklist } from "@/app/components/dashboard/shared/WillSetupChecklist";
 import { TokenVaultManager } from "@/app/components/dashboard/token/TokenVaultManager";
 import { useRouter } from "next/navigation";
 import { Coins, ShieldAlert, Sparkles } from "lucide-react";
 
-function statusOf(status: object): string {
-  return Object.keys(status)[0] ?? "unknown";
-}
-
 const AssetsPage: FC = () => {
-  const { data, refresh } = useDashboard();
+  const { data, refresh, isActive, readiness } = useDashboard();
   const router = useRouter();
   const will = data?.will ?? null;
 
@@ -50,11 +47,17 @@ const AssetsPage: FC = () => {
         </div>
       </div>
 
+      {/* `add_token` runs the same `require_quorum_reachable` guard as document
+          uploads, so the escrow form is gated on exactly the same checklist. */}
+      {!readiness.canAddAssets && (
+        <WillSetupChecklist readiness={readiness} action="escrow tokens" />
+      )}
+
       <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong">
         <TokenVaultManager
           refresh={refresh}
           tokenVaults={data?.tokenVaults ?? []}
-          isActive={statusOf(will.willStatus) === "active"}
+          isActive={isActive}
         />
       </div>
     </div>

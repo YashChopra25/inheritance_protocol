@@ -10,12 +10,19 @@ import type { InheritedTokenDisplay } from "@/app/types/inheritance.types";
 interface InheritedTokenRowProps {
   owner: PublicKey;
   token: InheritedTokenDisplay;
+  /**
+   * Whether the program would accept a claim right now. `claim_token` calls
+   * `require_claims_open`, so during the owner's grace period this button would
+   * only ever produce a failed transaction.
+   */
+  canClaim: boolean;
   refresh: () => void;
 }
 
 export const InheritedTokenRow: FC<InheritedTokenRowProps> = ({
   owner,
   token,
+  canClaim,
   refresh,
 }) => {
   const vault = useVault();
@@ -51,6 +58,10 @@ export const InheritedTokenRow: FC<InheritedTokenRowProps> = ({
       ) : nothingToClaim ? (
         <p className="text-[11px] text-muted">
           Your allocation is 0% for tokens — nothing to claim here.
+        </p>
+      ) : !canClaim ? (
+        <p className="text-[11px] text-muted">
+          Locked until the owner&apos;s revocation window ends.
         </p>
       ) : (
         <TxButton

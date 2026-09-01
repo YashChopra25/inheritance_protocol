@@ -69,12 +69,33 @@ export const MediaContentViewer: FC<MediaContentViewerProps> = ({
   }
 
   if (isPdf && objectUrl) {
+    // Mobile Safari and Chrome on Android refuse to render a PDF inside a frame
+    // at all, so the frame is always paired with a way out to a real tab.
     return (
-      <iframe
-        src={objectUrl}
-        className="w-full h-[50vh] rounded-lg border border-white/5 bg-white/2"
-        title="PDF Document Preview"
-      />
+      <div className="w-full flex flex-col gap-3">
+        <iframe
+          src={objectUrl}
+          className="w-full h-[50vh] rounded-lg border border-white/5 bg-white/90"
+          title="PDF Document Preview"
+        />
+        <div className="flex items-center justify-between gap-3 text-xs text-muted">
+          <span>Not showing? Open it in a new tab.</span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => window.open(objectUrl, "_blank", "noopener,noreferrer")}
+              className="inline-flex h-8 items-center justify-center rounded-lg px-3 font-medium btn-ghost cursor-pointer"
+            >
+              Open in new tab
+            </button>
+            <button
+              onClick={downloadFile}
+              className="inline-flex h-8 items-center justify-center rounded-lg px-3 font-medium btn-primary cursor-pointer"
+            >
+              Download
+            </button>
+          </div>
+        </div>
+      </div>
     );
   }
 

@@ -1,7 +1,9 @@
 "use client";
 
 import { FC } from "react";
+import Link from "next/link";
 import { PublicKey } from "@solana/web3.js";
+import { Lock } from "lucide-react";
 import { useVault } from "@/hooks/useVault";
 import { useMediaUpload } from "@/hooks/useMediaUpload";
 import { UploadProgressCard } from "./UploadProgressCard";
@@ -18,6 +20,14 @@ interface MediaManagerProps {
     account: { mediaIndex: number; ipfsCid: number[]; mediaType: number[] };
   }[];
   isActive: boolean;
+  /**
+   * Whether the will's custodian quorum is reachable. The program's
+   * `require_quorum_reachable` guard rejects `add_media_reference` when it is
+   * not, so the upload controls are withheld rather than shown and left to
+   * fail. The sealed list stays visible either way — a will can lose its quorum
+   * (a custodian removed) long after documents were added to it.
+   */
+  canUpload: boolean;
   /** Heirs to seal each uploaded document to (C5). */
   beneficiaries: ProgramItem<BeneficiaryAccount>[];
 }
@@ -27,6 +37,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
   refresh,
   media,
   isActive,
+  canUpload,
   beneficiaries,
 }) => {
   const vault = useVault();
@@ -43,6 +54,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
     mediaIndex: will.mediaIndex,
     refresh,
     isActive,
+    canUpload,
     beneficiaries,
   });
 
@@ -66,7 +78,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
         </div>
       </div>
 
-      {unreachableHeirs.length > 0 && (
+      {canUpload && unreachableHeirs.length > 0 && (
         <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4">
           <p className="text-sm font-medium text-amber-300">
             {unreachableHeirs.length}{" "}
@@ -91,6 +103,26 @@ export const MediaManager: FC<MediaManagerProps> = ({
       )}
 
       {/* Upload Target (On Top) */}
+      {!canUpload ? (
+        <div className="max-w-2xl mx-auto w-full rounded-2xl border border-dashed border-amber-500/30 bg-amber-500/[0.04] p-8 text-center">
+          <div className="mx-auto mb-3 w-fit rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-amber-300">
+            <Lock className="size-6" />
+          </div>
+          <p className="text-sm font-semibold text-white">
+            Uploads are locked until your will can reach quorum
+          </p>
+          <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-white/65">
+            Solana will not accept a document into a will whose custodians could
+            never confirm your passing. Complete the setup steps above first.
+          </p>
+          <Link
+            href="/dashboard/custodians"
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--accent)]/90"
+          >
+            Manage custodians
+          </Link>
+        </div>
+      ) : (
       <div className="max-w-2xl mx-auto w-full space-y-4">
         <FileDropzone
           onFileSelect={setSelectedFile}
@@ -125,6 +157,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
 
         {busy && <UploadProgressCard progress={uploadProgress} />}
       </div>
+      )}
 
       {/* Sealed Files List (At the Bottom) */}
       <div className="min-w-0 pt-4 border-t border-white/5">

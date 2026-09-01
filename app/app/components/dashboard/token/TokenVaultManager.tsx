@@ -1,6 +1,7 @@
 "use client";
 
 import { FC } from "react";
+import Link from "next/link";
 import { Plus, ExternalLink, RefreshCw } from "lucide-react";
 import { useVault } from "@/hooks/useVault";
 import { useTokenBalances } from "@/hooks/useTokenBalances";
@@ -8,7 +9,7 @@ import { useTokenEscrow, useTokenEscrowRemove } from "@/hooks/useTokenEscrow";
 import { Field, Input, explorerTxUrl } from "../shared/ui";
 import { TokenVaultList } from "./TokenVaultList";
 import { UserTokenList } from "./UserTokenList";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import type { ProgramItem } from "@/hooks/useWill";
 import type { TokenVaultAccount } from "@/hooks/useVault";
 interface TokenVaultManagerProps {
@@ -23,16 +24,12 @@ export const TokenVaultManager: FC<TokenVaultManagerProps> = ({
   isActive,
 }) => {
   const vault = useVault();
-  const { data } = useDashboard();
-  const will = data?.will;
-  const hasCustodians = will ? will.custodianCount > 0 : false;
   // H1: the program refuses to escrow into a will whose quorum can never be
-  // met, so the button is disabled for the same condition rather than letting
-  // the user discover it as a failed transaction.
-  const quorumReachable = will
-    ? will.custodianCount > 0 && will.minApprovals <= will.custodianCount
-    : false;
-  const canEscrow = isActive && hasCustodians && quorumReachable;
+  // met, so the form is disabled on exactly the condition the guard checks
+  // rather than letting the user discover it as a failed transaction. The same
+  // readiness object drives the checklist shown above this panel.
+  const { readiness } = useDashboard();
+  const canEscrow = isActive && readiness.canAddAssets;
 
   const {
     vaultDisplays,
@@ -89,12 +86,18 @@ export const TokenVaultManager: FC<TokenVaultManagerProps> = ({
             selectedMint={escrow.mintAddress}
           />
 
-          {!hasCustodians && (
+          {!readiness.canAddAssets && (
             <div className="rounded-lg bg-[var(--warn)]/10 border border-[var(--warn)]/20 p-3 text-xs text-[var(--warn)] space-y-1">
-              <span className="font-semibold block">Custodians Required</span>
+              <span className="font-semibold block">Setup Required</span>
               <p className="text-[10px] opacity-80 leading-relaxed">
-                At least one custodian must be added to your will before you can escrow tokens. Go to the Custodians tab to add a custodian.
+                {readiness.blockers[0]?.detail}
               </p>
+              <Link
+                href={readiness.blockers[0]?.href ?? "/dashboard/custodians"}
+                className="inline-flex items-center gap-1 text-[10px] font-semibold underline"
+              >
+                {readiness.blockers[0]?.cta ?? "Add custodian"}
+              </Link>
             </div>
           )}
 

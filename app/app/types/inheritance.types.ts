@@ -38,9 +38,40 @@ export interface InheritedTokenDisplay {
  */
 export type LockState = "active" | "pending" | "unlocked";
 
+/**
+ * Where a claimable will sits on the post-death timeline.
+ *
+ * `active` / `pending` — quorum not reached; there is no timeline yet.
+ * `grace`   — quorum reached, but `claim_*` is frozen while the owner may revoke.
+ * `open`    — the heir can claim right now.
+ * `closed`  — the claim window elapsed; teardown cranks may reclaim accounts.
+ */
+export type ClaimPhase = "active" | "pending" | "grace" | "open" | "closed";
+
+export interface ClaimTimeline {
+  phase: ClaimPhase;
+  /** Unix seconds; null when quorum has never been reached. */
+  claimableAt: number | null;
+  /** When the owner's revocation window ends and claims open. */
+  graceEndsAt: number | null;
+  /** When the heirs’ exclusive claim window ends. */
+  claimWindowEndsAt: number | null;
+  /** Seconds until claims open; 0 once they are. */
+  secondsUntilOpen: number;
+  /** Seconds until the claim window shuts; 0 once it has. */
+  secondsUntilClose: number;
+  /** The program would accept a claim at this instant. */
+  canClaimNow: boolean;
+  /** Open, but the deadline is close enough to warn about. */
+  closingSoon: boolean;
+}
+
 export interface InheritanceSummary {
   will: RoleWill;
   lock: LockState;
+  timeline: ClaimTimeline;
   /** One line explaining why this will is open, or why it is not. */
   note: string;
+  /** The heir still has to publish a document key, and the will is Active. */
+  needsKey: boolean;
 }

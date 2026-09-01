@@ -1,17 +1,14 @@
 "use client";
 
 import { FC } from "react";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import { CreateWillForm } from "@/app/components/dashboard/settings/CreateWillForm";
 import { UpdateWillForm } from "@/app/components/dashboard/settings/UpdateWillForm";
+import { CurrentWillSettings } from "@/app/components/dashboard/settings/CurrentWillSettings";
 import { TxButton } from "@/app/components/dashboard/shared/ui";
 
-function statusOf(status: object): string {
-  return Object.keys(status)[0] ?? "unknown";
-}
-
 const SettingsPage: FC = () => {
-  const { data, refresh, vault } = useDashboard();
+  const { data, refresh, vault, isActive, status } = useDashboard();
   const will = data?.will ?? null;
 
   if (!will) {
@@ -31,10 +28,14 @@ const SettingsPage: FC = () => {
         </p>
       </div>
 
-      <UpdateWillForm
-        refresh={refresh}
-        isActive={statusOf(will.willStatus) === "active"}
-      />
+      <CurrentWillSettings data={data!} status={status ?? "unknown"} />
+
+      <div className="flex flex-col gap-3">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-white">
+          Change settings
+        </h4>
+        <UpdateWillForm refresh={refresh} isActive={isActive} />
+      </div>
 
       <div className="border-t border-red-500/20 pt-6 mt-4">
         <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">

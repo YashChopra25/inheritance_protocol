@@ -61,7 +61,12 @@ export function proxy(request: NextRequest) {
     `connect-src 'self' https: wss:${isDev ? " ws:" : ""}`,
 
     "object-src 'none'",
-    "frame-src 'none'",
+    // blob: is required for the PDF preview: a decrypted document is handed to
+    // an <iframe> as a blob: URL so the browser's built-in PDF viewer can
+    // render it. With `frame-src 'none'` that frame is refused outright, which
+    // is why images and video (covered by img-src/media-src) previewed fine and
+    // PDFs came up blank.
+    "frame-src 'self' blob:",
     "frame-ancestors 'none'",
     "base-uri 'self'",
     "form-action 'self'",

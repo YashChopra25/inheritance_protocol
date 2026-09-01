@@ -1,10 +1,11 @@
 "use client";
 
-import { ReactNode, useState, useSyncExternalStore } from "react";
+import { ReactNode, useEffect, useState, useSyncExternalStore } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useVault } from "@/hooks/useVault";
 import { useWill } from "@/hooks/useWill";
-import { DashboardContext } from "./DashboardContext";
+import { useAppDispatch } from "@/app/store/hooks";
+import { clearWills, setConnectedOwner } from "@/app/store/willSlice";
 import { DashboardSidebar } from "@/app/components/dashboard/shared/DashboardSidebar";
 import { DashboardHeader } from "@/app/components/dashboard/shared/DashboardHeader";
 import { DisconnectedView } from "@/app/components/dashboard/shared/DisconnectedView";
@@ -28,7 +29,19 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const vault = useVault();
-  const { data, loading, error, refresh } = useWill(vault.publicKey);
+  const dispatch = useAppDispatch();
+  const walletKey = vault.publicKey?.toBase58() ?? null;
+
+  // Tell the store whose will the dashboard is showing, and drop every cached
+  // will on disconnect so the next wallet never sees the previous one's estate.
+  useEffect(() => {
+    dispatch(setConnectedOwner(walletKey));
+    if (!walletKey) dispatch(clearWills());
+  }, [dispatch, walletKey]);
+
+  // Loads the will into `state.will.byOwner`; every page reads it from there
+  // via `useDashboard()` rather than having it passed down.
+  const { data, loading, refresh } = useWill(vault.publicKey);
 
   if (!mounted) {
     return (
@@ -37,9 +50,6 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       </div>
     );
   }
-
-  const contextValue = { data, loading, error, refresh, vault };
-  console.log("DashboardLayout: loading", loading, "data", data);
 
   const renderContent = () => {
     if (!connected) {
@@ -63,41 +73,39 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <DashboardContext.Provider value={contextValue}>
-      <div className="flex min-h-screen bg-[#07050d] relative overflow-hidden">
-        <div className="pointer-events-none absolute inset-0 subtle-grid" />
+    <div className="flex min-h-screen bg-[#07050d] relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0 subtle-grid" />
 
-        {/* Desktop Sidebar */}
-        <div className="hidden lg:flex lg:shrink-0">
-          <DashboardSidebar />
-        </div>
-
-        {/* Mobile Sidebar (Drawer Overlay) */}
-        {mobileOpen && (
-          <div className="fixed inset-0 z-50 flex lg:hidden">
-            <div
-              className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-              onClick={() => setMobileOpen(false)}
-            />
-            <div className="relative flex flex-col w-64 max-w-xs h-full bg-[#08050e] duration-200">
-              <button
-                onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-2 text-muted hover:text-white hover:bg-white/4 rounded-lg transition-colors"
-                aria-label="Close menu"
-              >
-                <X className="size-4" />
-              </button>
-              <DashboardSidebar onClose={() => setMobileOpen(false)} />
-            </div>
-          </div>
-        )}
-
-        {/* Main Content Area */}
-        <div className="flex-1 flex flex-col min-w-0 z-10">
-          <DashboardHeader onMenuClick={() => setMobileOpen(true)} />
-          <main className="flex-1 overflow-y-auto">{renderContent()}</main>
-        </div>
+      {/* Desktop Sidebar */}
+      <div className="hidden lg:flex lg:shrink-0">
+        <DashboardSidebar />
       </div>
-    </DashboardContext.Provider>
+
+      {/* Mobile Sidebar (Drawer Overlay) */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-50 flex lg:hidden">
+          <div
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => setMobileOpen(false)}
+          />
+          <div className="relative flex flex-col w-64 max-w-xs h-full bg-[#08050e] duration-200">
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="absolute top-4 right-4 p-2 text-muted hover:text-white hover:bg-white/4 rounded-lg transition-colors"
+              aria-label="Close menu"
+            >
+              <X className="size-4" />
+            </button>
+            <DashboardSidebar onClose={() => setMobileOpen(false)} />
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-w-0 z-10">
+        <DashboardHeader onMenuClick={() => setMobileOpen(true)} />
+        <main className="flex-1 overflow-y-auto">{renderContent()}</main>
+      </div>
+    </div>
   );
 }

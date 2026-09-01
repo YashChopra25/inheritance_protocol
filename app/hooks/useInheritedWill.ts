@@ -6,9 +6,10 @@ import { useVault } from "./useVault";
 import { useWill, type ProgramItem, type WillBundle } from "./useWill";
 import { useParsedKey } from "./useParsedKey";
 import { willStatusLabel } from "@/lib/utils";
-import { lockStateOf } from "@/lib/inheritance";
+import { claimTimeline, lockStateOf } from "@/lib/inheritance";
+import { useNow } from "./useNow";
 import type { BeneficiaryAccount } from "./useVault";
-import type { LockState } from "@/app/types/inheritance.types";
+import type { ClaimTimeline, LockState } from "@/app/types/inheritance.types";
 
 interface UseInheritedWillResult {
   owner: PublicKey | null;
@@ -18,6 +19,12 @@ interface UseInheritedWillResult {
   /** The will PDA exists on-chain. */
   exists: boolean;
   lock: LockState | null;
+  /**
+   * Where the will sits on the post-death timeline. Null with no will. The
+   * claim buttons key off `timeline.canClaimNow`, which mirrors the program's
+   * `require_claims_open` guard exactly.
+   */
+  timeline: ClaimTimeline | null;
   me: PublicKey | null;
   myBeneficiary: ProgramItem<BeneficiaryAccount> | undefined;
   loading: boolean;
@@ -34,8 +41,19 @@ export function useInheritedWill(ownerStr: string): UseInheritedWillResult {
   const { publicKey } = useVault();
   const owner = useParsedKey(ownerStr);
   const { data, loading, error, refresh } = useWill(owner);
+  // One-second tick: this page shows a live countdown to the next deadline.
+  const now = useNow(1000);
 
   const will = data?.will ?? null;
+  const status = will ? willStatusLabel(will.willStatus) : null;
+
+  const timeline = useMemo(
+    () =>
+      will && status
+        ? claimTimeline(status, will.claimableAt.toNumber(), now)
+        : null,
+    [will, status, now],
+  );
 
   const myBeneficiary = useMemo(
     () =>
@@ -48,7 +66,8 @@ export function useInheritedWill(ownerStr: string): UseInheritedWillResult {
     invalidOwner: ownerStr.length > 0 && owner === null,
     data,
     exists: will !== null,
-    lock: will ? lockStateOf(willStatusLabel(will.willStatus)) : null,
+    lock: status ? lockStateOf(status) : null,
+    timeline,
     me: publicKey,
     myBeneficiary,
     loading,

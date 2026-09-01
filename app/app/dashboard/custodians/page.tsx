@@ -1,17 +1,13 @@
 "use client";
 
 import { FC } from "react";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import { CustodianManager } from "@/app/components/dashboard/custodian/CustodianManager";
 import { PlaceholderTab } from "@/app/components/dashboard/shared/DashboardTabs";
 import { useRouter } from "next/navigation";
 
-function statusOf(status: object): string {
-  return Object.keys(status)[0] ?? "unknown";
-}
-
 const CustodiansPage: FC = () => {
-  const { data, refresh } = useDashboard();
+  const { data, refresh, isActive } = useDashboard();
   const router = useRouter();
   const will = data?.will ?? null;
 
@@ -24,13 +20,16 @@ const CustodiansPage: FC = () => {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong max-w-4xl mx-auto w-full animate-fade-in">
+    // No outer card: the manager lays itself out as a row of two cards over a
+    // full-width list, and wrapping that in another panel just adds inset.
+    <div className="max-w-5xl mx-auto w-full animate-fade-in">
       <CustodianManager
         refresh={refresh}
         custodians={data?.custodians ?? []}
-        isActive={statusOf(will.willStatus) === "active"}
+        isActive={isActive}
         minApprovals={will.minApprovals}
         approvalsReceived={will.approvalsReceived}
+        approvalEpoch={will.approvalEpoch}
       />
     </div>
   );

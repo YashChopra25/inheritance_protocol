@@ -14,7 +14,7 @@ import {
   Settings,
 } from "lucide-react";
 import { Logo } from "@/app/components/homePage/Logo";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 
 const links = [
   { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard },

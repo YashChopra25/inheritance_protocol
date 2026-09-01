@@ -2,6 +2,7 @@ import { FC } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { WillBundle } from "@/hooks/useWill";
 import { useVault } from "@/hooks/useVault";
+import { evaluateWillReadiness } from "@/lib/willReadiness";
 import {
   WillOverview,
   CreateWillForm,
@@ -41,6 +42,9 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
   firstBeneficiary,
 }) => {
   const will = data?.will ?? null;
+  // Same guard the program applies to `add_media_reference`: no reachable
+  // quorum, no uploads.
+  const readiness = evaluateWillReadiness(data);
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.95fr_1.05fr] gap-8 items-start">
@@ -55,6 +59,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
                 refresh={refresh}
                 media={data?.media ?? []}
                 isActive={statusOf(will.willStatus) === "active"}
+                canUpload={readiness.canAddAssets}
                 beneficiaries={data?.beneficiaries ?? []}
               />
             </div>
@@ -65,6 +70,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
                 isActive={statusOf(will.willStatus) === "active"}
                 minApprovals={will.minApprovals}
                 approvalsReceived={will.approvalsReceived}
+                approvalEpoch={will.approvalEpoch}
               />
             </div>
           </>

@@ -10,6 +10,8 @@ interface InheritedTokensListProps {
   owner: PublicKey;
   tokens: InheritedTokenDisplay[];
   loading: boolean;
+  /** Whether `claim_token` would be accepted right now. */
+  canClaim: boolean;
   refresh: () => void;
 }
 
@@ -17,6 +19,7 @@ export const InheritedTokensList: FC<InheritedTokensListProps> = ({
   owner,
   tokens,
   loading,
+  canClaim,
   refresh,
 }) => {
   if (tokens.length === 0) {
@@ -52,6 +55,7 @@ export const InheritedTokensList: FC<InheritedTokensListProps> = ({
             key={t.tokenVault.toBase58()}
             owner={owner}
             token={t}
+            canClaim={canClaim}
             refresh={refresh}
           />
         ))}

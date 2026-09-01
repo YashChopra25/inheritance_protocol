@@ -9,6 +9,7 @@ import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
 import { RPC_ENDPOINT } from "@/lib/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
+import { ReduxProvider } from "@/app/store/ReduxProvider";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
 
@@ -27,8 +28,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
       <WalletProvider wallets={wallets} autoConnect>
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
-            {children}
-            <Toaster richColors theme="dark" position="bottom-right" />
+            <ReduxProvider>
+              {children}
+              <Toaster richColors theme="dark" position="bottom-right" />
+            </ReduxProvider>
           </QueryClientProvider>
         </WalletModalProvider>
       </WalletProvider>

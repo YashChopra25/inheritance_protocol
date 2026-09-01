@@ -9,9 +9,11 @@ import { useInheritedWill } from "@/hooks/useInheritedWill";
 import { useInheritedTokens } from "@/hooks/useInheritedTokens";
 import { short } from "../shared/ui";
 import { InheritedDocumentsList } from "../intervene/InheritedDocumentsList";
+import { RecipientKeyCard } from "../intervene/RecipientKeyCard";
 import { InheritedTokensList } from "./InheritedTokensList";
 import { InheritanceStatusCard } from "./InheritanceStatusCard";
 import { InheritanceClaimCard } from "./InheritanceClaimCard";
+import { ClaimTimelineCard } from "./ClaimTimelineCard";
 import { INHERITANCE_ROOT } from "./inheritance.constants";
 
 interface InheritanceDetailProps {
@@ -34,6 +36,7 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
     data,
     exists,
     lock,
+    timeline,
     me,
     myBeneficiary,
     loading,
@@ -70,7 +73,7 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
     if (error) {
       return <p className="py-4 font-mono text-xs text-red-400">{error}</p>;
     }
-    if (!owner || !data || !exists || !data.will || !lock) {
+    if (!owner || !data || !exists || !data.will || !lock || !timeline) {
       return (
         <Notice>
           No will exists for {owner ? short(owner) : "this address"}.
@@ -87,21 +90,41 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
       );
     }
 
+    // Documents are readable as soon as the will is claimable; only *claims*
+    // wait for the grace period. Keeping the two apart is the difference
+    // between "your files are here" and a transaction the program rejects.
+    const documentsOpen = lock === "unlocked";
+
     return (
       <div className="flex flex-col gap-5">
-        <InheritanceStatusCard owner={owner} will={data.will} lock={lock} />
+        <InheritanceStatusCard
+          owner={owner}
+          will={data.will}
+          timeline={timeline}
+          allocationBps={myBeneficiary.account.allocationPercentage}
+        />
+
+        {/* Registration is only accepted while the will is Active, and only
+            documents uploaded *after* it can ever be opened by this heir — so
+            it belongs at the top of a live will, not buried in another tab. */}
+        {lock === "active" && <RecipientKeyCard ownerAddress={ownerStr} />}
+
+        <ClaimTimelineCard timeline={timeline} />
+
         <InheritanceClaimCard
           owner={owner}
           beneficiary={myBeneficiary.account}
-          lock={lock}
+          timeline={timeline}
           refresh={refreshAll}
         />
-        {lock === "unlocked" ? (
+
+        {documentsOpen ? (
           <>
             <InheritedTokensList
               owner={owner}
               tokens={tokenDisplays}
               loading={loadingTokens}
+              canClaim={timeline.canClaimNow}
               refresh={refreshAll}
             />
             <InheritedDocumentsList media={data.media} />

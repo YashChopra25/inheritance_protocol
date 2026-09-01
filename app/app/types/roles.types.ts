@@ -9,9 +9,18 @@ export interface RoleWill {
   approvalsReceived: number;
   minApprovals: number;
   mediaCount: number;
+  /** How many token vaults are escrowed on the will. */
+  tokenVaultCount: number;
+  /**
+   * Unix seconds at which custodian quorum was reached, or 0 if it never has
+   * been. Both post-death deadlines are measured from here.
+   */
+  claimableAt: number;
   // Beneficiary-specific
   allocationPercentage?: number;
   hasClaimed?: boolean;
+  /** Whether this heir has published an X25519 key documents can be sealed to. */
+  hasEncryptionKey?: boolean;
   // Custodian-specific
   hasApproved?: boolean;
 }

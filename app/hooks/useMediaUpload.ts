@@ -13,6 +13,14 @@ interface UseMediaUploadProps {
   refresh: () => void;
   isActive: boolean;
   /**
+   * Whether the will's custodian quorum is reachable (`custodian_count > 0` and
+   * `min_approvals <= custodian_count`). `add_media_reference` calls
+   * `require_quorum_reachable`, so without this the upload would fail with
+   * `QuorumUnreachable` (6025) — but only at the very last step, after the file
+   * has been encrypted and pinned to IPFS.
+   */
+  canUpload: boolean;
+  /**
    * The will's heirs. Every one who has published an encryption key gets a
    * sealed copy of this document's data key — that is what lets them open it
    * after the owner is gone, without the server ever holding a key.
@@ -35,6 +43,7 @@ export function useMediaUpload({
   mediaIndex,
   refresh,
   isActive,
+  canUpload,
   beneficiaries,
 }: UseMediaUploadProps) {
   const vault = useVault();
@@ -64,6 +73,15 @@ export function useMediaUpload({
     if (!isActive) {
       setError(
         "Documents can only be added while the will is active. It is currently in death confirmation."
+      );
+      return;
+    }
+    // Checked before any encryption or upload work: the on-chain guard runs in
+    // the very last instruction, so failing it here saves the user from
+    // encrypting and pinning a file that can never be recorded.
+    if (!canUpload) {
+      setError(
+        "Add at least one custodian, and make sure the required approvals do not exceed the number of custodians, before sealing documents."
       );
       return;
     }

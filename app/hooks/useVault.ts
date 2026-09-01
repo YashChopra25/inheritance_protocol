@@ -6,8 +6,6 @@ import {
   useAnchorWallet,
 } from "@solana/wallet-adapter-react";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
-import type { IdlAccounts } from "@coral-xyz/anchor";
-import type { VaultInheritance } from "@/lib/idl/vault_inheritance";
 import {
   getProgram,
   getReadonlyProgram,
@@ -26,11 +24,15 @@ import {
   BN,
 } from "@/lib/anchor";
 
-export type WillAccount = IdlAccounts<VaultInheritance>["will"];
-export type CustodianAccount = IdlAccounts<VaultInheritance>["custodian"];
-export type BeneficiaryAccount = IdlAccounts<VaultInheritance>["beneficiary"];
-export type MediaAccount = IdlAccounts<VaultInheritance>["mediaReference"];
-export type TokenVaultAccount = IdlAccounts<VaultInheritance>["tokenVault"];
+// Defined next to the fetcher in `lib/willFetch`, re-exported here because
+// most components reach for them alongside the actions on this hook.
+export type {
+  WillAccount,
+  CustodianAccount,
+  BeneficiaryAccount,
+  MediaAccount,
+  TokenVaultAccount,
+} from "@/lib/willFetch";
 
 /**
  * Central hook exposing the connected wallet, the Anchor program, PDA helpers,

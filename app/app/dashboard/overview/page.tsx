@@ -1,21 +1,18 @@
 "use client";
 
 import { FC } from "react";
-import { useDashboard } from "@/app/dashboard/DashboardContext";
+import { useDashboard } from "@/hooks/useDashboard";
 import { WillOverview } from "@/app/components/dashboard/overview/WillOverview";
 import { VaultVisual } from "@/app/components/homePage/VaultVisual";
 import { LifecycleFlow } from "@/app/components/dashboard/overview/LifecycleFlow";
 import { ContextFlowDiagram } from "@/app/components/dashboard/overview/ContextFlowDiagram";
 import { bytesToCid } from "@/lib/anchor";
 import { PlaceholderTab } from "@/app/components/dashboard/shared/DashboardTabs";
+import { WillSetupChecklist } from "@/app/components/dashboard/shared/WillSetupChecklist";
 import { useRouter } from "next/navigation";
 
-function statusOf(status: object): string {
-  return Object.keys(status)[0] ?? "unknown";
-}
-
 const OverviewPage: FC = () => {
-  const { data, vault } = useDashboard();
+  const { data, vault, status, readiness } = useDashboard();
   const router = useRouter();
   const will = data?.will ?? null;
 
@@ -35,6 +32,12 @@ const OverviewPage: FC = () => {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-[1.95fr_1.05fr] gap-8 items-start animate-fade-in">
       <div className="flex flex-col gap-6">
+        {/* First thing on the dashboard while the will cannot hold assets — the
+            same guard blocks documents and token escrow, so the user should
+            meet it here rather than at the end of an upload. */}
+        {!readiness.canAddAssets && (
+          <WillSetupChecklist readiness={readiness} action="add anything to it" />
+        )}
         <WillOverview data={data!} />
         <LifecycleFlow />
         <ContextFlowDiagram />
@@ -48,7 +51,7 @@ const OverviewPage: FC = () => {
           <div className="w-full scale-95 sm:scale-100 origin-center">
             <VaultVisual
               ownerKey={vault.publicKey}
-              status={statusOf(will.willStatus)}
+              status={status ?? "unknown"}
               mediaCount={will.mediaCount}
               beneficiaryCount={will.beneficiaryCount}
               lastInactivity={will.lastActiveAt.toNumber()}

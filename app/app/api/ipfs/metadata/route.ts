@@ -42,19 +42,19 @@ export async function GET(request: Request) {
     if (!file) {
       return NextResponse.json(
         { error: "That document is not pinned" },
-        { status: 404 }
+        { status: 404 },
       );
     }
-
     return NextResponse.json(
       {
         id: file.id,
         cid: file.cid,
         /** Size of the CIPHERTEXT, not the original file. */
+        name: file.name,
         size: file.size,
         createdAt: file.created_at,
       },
-      { headers: { "Cache-Control": "no-store" } }
+      { headers: { "Cache-Control": "no-store" } },
     );
   } catch (err) {
     return serverError("ipfs/metadata", err);

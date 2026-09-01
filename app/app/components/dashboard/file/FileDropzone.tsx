@@ -71,10 +71,10 @@ export const FileDropzone: FC<FileDropzoneProps> = ({
         !isActive
           ? "border-white/5 bg-black/5 opacity-55 cursor-not-allowed"
           : isDragActive
-          ? "border-[var(--accent)] bg-[var(--accent)]/[0.04] shadow-lg shadow-[var(--accent)]/5"
-          : selectedFile
-          ? "border-[var(--neon)]/40 bg-[var(--neon)]/[0.01]"
-          : "border-white/10 bg-black/20 hover:border-[var(--accent)]/40 hover:bg-white/[0.01]"
+            ? "border-[var(--accent)] bg-[var(--accent)]/[0.04] shadow-lg shadow-[var(--accent)]/5"
+            : selectedFile
+              ? "border-[var(--neon)]/40 bg-[var(--neon)]/[0.01]"
+              : "border-white/10 bg-black/20 hover:border-[var(--accent)]/40 hover:bg-white/[0.01]"
       }`}
     >
       <input
@@ -91,8 +91,11 @@ export const FileDropzone: FC<FileDropzoneProps> = ({
             <File className="size-6" />
           </div>
           <div className="min-w-0 text-center">
-            <p className="text-xs font-semibold text-white truncate max-w-full">
-              {selectedFile.name}
+            {/* //showing the name of the file atmost 30 characters and if it exceeds then showing ... at the end */}
+            <p className="text-xs font-semibold text-white truncate max-w-full ">
+              {selectedFile.name.length > 30
+                ? `${selectedFile.name.slice(0, 27)}...`
+                : selectedFile.name}
             </p>
             <p className="text-[10px] text-muted font-mono mt-0.5">
               {formatBytes(selectedFile.size)}
