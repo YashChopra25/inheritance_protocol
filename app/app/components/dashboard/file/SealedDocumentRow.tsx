@@ -131,7 +131,7 @@ export const SealedDocumentRow: FC<SealedDocumentRowProps> = ({
   const { Icon: FileIcon, colorClass } = getFileIconConfig(type);
 
   return (
-    <tr className="border-b border-white/5 hover:bg-white/[0.01] transition-colors group">
+    <tr className="border-b border-border hover:bg-white/[0.01] transition-colors group">
       <td className="w-16 py-3 px-4 text-muted font-mono text-[11px] hidden md:table-cell text-center">
         #{mediaItem.account.mediaIndex}
       </td>
@@ -151,7 +151,7 @@ export const SealedDocumentRow: FC<SealedDocumentRowProps> = ({
       <td className="w-32 py-3 px-4 font-mono text-[11px] text-muted">
         <div className="flex items-center gap-1.5 group/cid">
           <span className="truncate max-w-[80px]">{cid}</span>
-          <button onClick={copyCid} className="p-1 hover:bg-white/5 rounded text-muted hover:text-white transition-colors">
+          <button onClick={copyCid} className="p-1 hover:bg-white/5 rounded text-muted hover:text-foreground transition-colors">
             {copied ? <Check className="size-3 text-[var(--neon)]" /> : <Copy className="size-3 opacity-0 group-hover/cid:opacity-100 transition-opacity" />}
           </button>
         </div>
@@ -159,17 +159,17 @@ export const SealedDocumentRow: FC<SealedDocumentRowProps> = ({
       <td className="w-24 py-3 px-4 text-right relative">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <button className="p-1.5 rounded-lg border border-white/5 bg-white/[0.02] hover:bg-white/[0.05] text-muted hover:text-white transition-colors cursor-pointer"><MoreVertical className="size-4" /></button>
+            <button className="p-1.5 rounded-lg border border-border bg-white/[0.02] hover:bg-white/[0.05] text-muted hover:text-foreground transition-colors cursor-pointer"><MoreVertical className="size-4" /></button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="border-white/10 bg-[#0e0a1c] p-1.5 flex flex-col gap-1 w-40 z-50">
-            <DropdownMenuItem onClick={() => onPreview(cid, type)} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-white/80 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer">
+          <DropdownMenuContent align="end" className="border-border bg-surface p-1.5 flex flex-col gap-1 w-40 z-50">
+            <DropdownMenuItem onClick={() => onPreview(cid, type)} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-white/80 hover:text-foreground hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer">
               <Eye className="size-3.5 text-[var(--accent)]" /> <span>Preview</span>
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setEditOpen(true)} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-white/80 hover:text-white hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer">
+            <DropdownMenuItem onClick={() => setEditOpen(true)} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-white/80 hover:text-foreground hover:bg-white/[0.04] rounded-lg transition-colors cursor-pointer">
               <Edit2 className="size-3.5 text-[var(--warn)]" /> <span>Edit Name</span>
             </DropdownMenuItem>
             <DropdownMenuSeparator className="bg-white/5" />
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)} disabled={!isActive} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-[var(--danger)] hover:text-white hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer">
+            <DropdownMenuItem onClick={() => setDeleteOpen(true)} disabled={!isActive} className="flex items-center gap-2.5 w-full px-2.5 py-2 text-[11px] font-semibold text-[var(--danger)] hover:text-foreground hover:bg-destructive/10 rounded-lg transition-colors cursor-pointer">
               <Trash2 className="size-3.5 text-[var(--danger)]" /> <span>Remove</span>
             </DropdownMenuItem>
           </DropdownMenuContent>

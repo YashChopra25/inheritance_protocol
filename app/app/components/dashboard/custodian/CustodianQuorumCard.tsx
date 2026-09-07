@@ -37,7 +37,7 @@ export const CustodianQuorumCard: FC<CustodianQuorumCardProps> = ({
         </p>
         <Link
           href="/dashboard/settings"
-          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-white/10 px-2.5 py-1 text-[11px] font-medium text-white/80 transition hover:border-white/20 hover:bg-white/5 hover:text-white"
+          className="inline-flex shrink-0 items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-[11px] font-medium text-white/80 transition hover:border-border-strong hover:bg-white/5 hover:text-foreground"
         >
           <SlidersHorizontal className="size-3 shrink-0" />
           Modify

@@ -37,7 +37,7 @@ export const ContextFlowDiagram: FC = () => {
   };
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/1 p-5 glass relative overflow-hidden flex flex-col gap-4">
+    <div className="rounded-2xl border border-border bg-white/1 p-5 glass relative overflow-hidden flex flex-col gap-4">
       {/* CSS Styles injection for smooth dot movement */}
       <style
         dangerouslySetInnerHTML={{
@@ -55,7 +55,7 @@ export const ContextFlowDiagram: FC = () => {
         }}
       />
 
-      <div className="flex items-center justify-between gap-3 border-b border-white/5 pb-3">
+      <div className="flex items-center justify-between gap-3 border-b border-border pb-3">
         <div>
           <h3 className="text-xs font-semibold uppercase tracking-wider text-accent">
             Decentralized Data Flow
@@ -70,7 +70,7 @@ export const ContextFlowDiagram: FC = () => {
           className={`px-2 py-1 rounded text-[10px] font-mono border transition-all cursor-pointer ${
             isPlaying
               ? "bg-[var(--accent)]/15 text-accent border-[var(--accent)]/20"
-              : "bg-white/5 text-muted border-white/10"
+              : "bg-white/5 text-muted border-border"
           }`}
         >
           {isPlaying ? "● Auto-play" : "○ Paused"}
@@ -80,9 +80,9 @@ export const ContextFlowDiagram: FC = () => {
       <ContextFlowDiagramSvg state={state} nodeClass={nodeClass} pathClass={pathClass} />
 
       {/* State Switcher & Description */}
-      <div className="flex flex-col gap-2 bg-white/2 border border-white/5 p-3 rounded-xl min-h-[90px] justify-center transition-all duration-300">
+      <div className="flex flex-col gap-2 bg-white/2 border border-border p-3 rounded-xl min-h-[90px] justify-center transition-all duration-300">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-xs font-semibold text-white transition-all duration-300">
+          <span className="text-xs font-semibold text-foreground transition-all duration-300">
             {state.title}
           </span>
           <div className="flex gap-1.5">

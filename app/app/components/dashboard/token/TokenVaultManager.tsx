@@ -57,9 +57,9 @@ export const TokenVaultManager: FC<TokenVaultManagerProps> = ({
   return (
     <div className="grid grid-cols-1 md:grid-cols-5 gap-6 w-full items-start">
       {/* Deposit Form */}
-      <div className="md:col-span-2 rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+      <div className="md:col-span-2 rounded-2xl border border-border bg-white/[0.02] p-5 space-y-4">
         <div>
-          <h3 className="text-sm font-semibold text-white">Escrow New SPL Token</h3>
+          <h3 className="text-sm font-semibold text-foreground">Escrow New SPL Token</h3>
           <p className="text-[11px] text-muted mt-0.5">Register and deposit tokens under your digital will.</p>
         </div>
 
@@ -123,7 +123,7 @@ export const TokenVaultManager: FC<TokenVaultManagerProps> = ({
           <button
             onClick={escrow.submitEscrow}
             disabled={!canEscrow || !escrow.isValidMint || escrow.submitting || !escrow.amount}
-            className="w-full flex h-10 items-center justify-center rounded-lg px-4 text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white disabled:opacity-50 transition-all gap-1.5 cursor-pointer"
+            className="w-full flex h-10 items-center justify-center rounded-lg px-4 text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-foreground disabled:opacity-50 transition-all gap-1.5 cursor-pointer"
           >
             {escrow.submitting ? (
               <RefreshCw className="size-3.5 animate-spin" />

@@ -37,7 +37,7 @@ export const InheritanceList: FC = () => {
   if (loading && items.length === 0) {
     return (
       <div className="flex items-center gap-2 py-6 text-xs text-muted">
-        <div className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-accent" />
+        <div className="size-3 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
         <span>Searching Solana for wills that name you…</span>
       </div>
     );
@@ -49,9 +49,9 @@ export const InheritanceList: FC = () => {
 
   if (items.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-2 rounded-xl border border-white/5 bg-black/10 py-10 text-center">
+      <div className="flex flex-col items-center gap-2 rounded-xl border border-border bg-black/10 py-10 text-center">
         <Inbox className="size-5 text-muted" />
-        <p className="text-xs font-semibold text-white">
+        <p className="text-xs font-semibold text-foreground">
           No wills name you as an heir
         </p>
         <p className="max-w-xs text-[11px] leading-relaxed text-muted">
@@ -74,7 +74,7 @@ export const InheritanceList: FC = () => {
           onClick={refresh}
           disabled={loading}
           title="Refresh"
-          className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-white/5 hover:text-white"
+          className="shrink-0 rounded-lg p-1.5 text-muted transition-colors hover:bg-white/5 hover:text-foreground"
         >
           <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>

@@ -22,9 +22,9 @@ export const RoleWillList: FC<RoleWillListProps> = ({
   onSelect,
 }) => {
   return (
-    <div className="flex flex-1 flex-col gap-3 rounded-xl border border-white/5 bg-black/10 p-4">
+    <div className="flex flex-1 flex-col gap-3 rounded-xl border border-border bg-black/10 p-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-white">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
           {title}
         </h4>
         {!loading && (
@@ -36,7 +36,7 @@ export const RoleWillList: FC<RoleWillListProps> = ({
 
       {loading ? (
         <div className="flex items-center gap-2 py-2 text-xs text-muted">
-          <div className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-accent" />
+          <div className="size-3 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
           <span>Loading…</span>
         </div>
       ) : wills.length === 0 ? (

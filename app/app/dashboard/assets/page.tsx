@@ -32,7 +32,7 @@ const AssetsPage: FC = () => {
             <div className="inline-flex items-center gap-1.5 rounded-full bg-[var(--accent)]/10 border border-[var(--accent)]/20 px-2.5 py-0.5 text-[10px] font-semibold text-[var(--accent)] uppercase tracking-wider">
               <Sparkles className="size-3" /> Secure Escrow
             </div>
-            <h2 className="text-lg font-semibold text-white">
+            <h2 className="text-lg font-semibold text-foreground">
               Trustless SOL & Token Distribution
             </h2>
             <p className="text-xs text-muted leading-relaxed max-w-xl">
@@ -53,7 +53,7 @@ const AssetsPage: FC = () => {
         <WillSetupChecklist readiness={readiness} action="escrow tokens" />
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong">
+      <div className="rounded-2xl border border-border bg-white/[0.02] p-6 glass-strong">
         <TokenVaultManager
           refresh={refresh}
           tokenVaults={data?.tokenVaults ?? []}

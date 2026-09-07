@@ -33,7 +33,7 @@ const Milestone: FC<{
     <div className="pb-4">
       <p
         className={`text-xs font-semibold ${
-          state === "future" ? "text-muted" : "text-white"
+          state === "future" ? "text-muted" : "text-foreground"
         }`}
       >
         {label}
@@ -77,7 +77,7 @@ export const ClaimTimelineCard: FC<ClaimTimelineCardProps> = ({ timeline }) => {
           ? "border-red-500/25 bg-red-500/5"
           : timeline.closingSoon
             ? "border-amber-500/25 bg-amber-500/5"
-            : "border-white/10 bg-white/[0.02]"
+            : "border-border bg-white/[0.02]"
       }`}
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
@@ -88,7 +88,7 @@ export const ClaimTimelineCard: FC<ClaimTimelineCardProps> = ({ timeline }) => {
           {phase !== "closed" && (
             <p
               className={`mt-1 font-mono text-xl tabular-nums tracking-wide sm:text-2xl ${
-                timeline.closingSoon ? "text-amber-300" : "text-white"
+                timeline.closingSoon ? "text-amber-300" : "text-foreground"
               }`}
             >
               {formatCountdown(countdownMs)}

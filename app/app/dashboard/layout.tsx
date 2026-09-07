@@ -46,7 +46,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (!mounted) {
     return (
       <div className="flex-1 flex items-center justify-center min-h-100">
-        <div className="size-6 animate-spin rounded-full border-2 border-white/30 border-t-accent" />
+        <div className="size-5 animate-spin rounded-full border border-border-strong border-t-accent" />
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="flex min-h-screen bg-[#07050d] relative overflow-hidden">
+    <div className="relative flex min-h-screen overflow-hidden bg-background">
       <div className="pointer-events-none absolute inset-0 subtle-grid" />
 
       {/* Desktop Sidebar */}
@@ -88,10 +88,10 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
             className="fixed inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setMobileOpen(false)}
           />
-          <div className="relative flex flex-col w-64 max-w-xs h-full bg-[#08050e] duration-200">
+          <div className="relative flex h-full w-64 max-w-xs flex-col bg-surface">
             <button
               onClick={() => setMobileOpen(false)}
-              className="absolute top-4 right-4 p-2 text-muted hover:text-white hover:bg-white/4 rounded-lg transition-colors"
+              className="absolute right-3 top-3 p-2 text-muted transition-colors hover:text-foreground"
               aria-label="Close menu"
             >
               <X className="size-4" />

@@ -21,10 +21,10 @@ export const DeleteDocumentModal: FC<DeleteDocumentModalProps> = ({
 }) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in text-left">
-      <div className="max-w-md w-full rounded-2xl border border-white/10 bg-[#0e0a1c] p-6 glass-strong shadow-2xl space-y-5 relative">
-        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 text-muted hover:text-white hover:bg-white/[0.04] rounded-lg transition-all"><X className="size-4" /></button>
+      <div className="max-w-md w-full rounded-2xl border border-border-strong bg-surface p-6 space-y-5 relative">
+        <button onClick={onClose} className="absolute top-4 right-4 p-1.5 text-muted hover:text-foreground hover:bg-white/[0.04] rounded-lg transition-all"><X className="size-4" /></button>
         <div>
-          <h3 className="text-sm font-semibold text-white">Delete Document</h3>
+          <h3 className="text-sm font-semibold text-foreground">Delete Document</h3>
           <p className="text-[10px] text-muted mt-0.5 font-mono">CID: {cid}</p>
         </div>
         <div className="rounded-xl border border-[var(--danger)]/20 bg-[var(--danger)]/5 p-4 text-[10px] text-muted leading-relaxed flex gap-2.5 items-start">
@@ -35,7 +35,7 @@ export const DeleteDocumentModal: FC<DeleteDocumentModalProps> = ({
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5 pt-2">
-          <button type="button" onClick={onClose} className="h-9 px-4 rounded-lg text-xs font-semibold hover:bg-white/5 text-white transition-colors cursor-pointer">Cancel</button>
+          <button type="button" onClick={onClose} className="h-9 px-4 rounded-lg text-xs font-semibold hover:bg-white/5 text-foreground transition-colors cursor-pointer">Cancel</button>
           <TxButton
             tone="danger"
             action={async () => {

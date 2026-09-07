@@ -16,7 +16,7 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
   return (
     <div className="flex flex-col gap-5">
       <div>
-        <h3 className="text-base font-semibold text-white">
+        <h3 className="text-base font-semibold text-foreground">
           Create your digital will
         </h3>
         <p className="mt-1 text-xs text-muted leading-relaxed">
@@ -25,8 +25,8 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
         </p>
       </div>
 
-      <div className="rounded-xl border border-white/5 bg-black/20 p-5">
-        <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+      <div className="rounded-xl border border-border bg-black/20 p-5">
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
           How it works
         </h4>
         <p className="mt-2 text-xs text-muted leading-relaxed">

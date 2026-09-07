@@ -47,7 +47,7 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
         <MyRolesPanel selectedOwner={owner?.toBase58() ?? null} onSelect={setOwnerStr} />
       )}
 
-      <div className="flex flex-col gap-3 rounded-xl border border-white/5 bg-black/10 p-4">
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-black/10 p-4">
         <Field label="Or enter a will owner's public key manually">
           <Input
             placeholder="e.g. 9xVuPq3Tn8eK4mJ2hL5rDc7s..."
@@ -59,7 +59,7 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
 
       {owner && loading && (
         <div className="flex items-center gap-2 text-xs text-muted py-3">
-          <div className="size-3.5 animate-spin rounded-full border-2 border-white/30 border-t-accent" />
+          <div className="size-3.5 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
           <span>Searching Solana blockchain for active wills…</span>
         </div>
       )}
@@ -69,7 +69,7 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
       {error && <p className="text-xs text-red-400 font-mono py-1">{error}</p>}
 
       {owner && data && !will && (
-        <div className="rounded-lg border border-white/5 bg-black/20 p-4 text-center">
+        <div className="rounded-lg border border-border bg-black/20 p-4 text-center">
           <p className="text-xs text-muted">No active will found for this address on Solana.</p>
         </div>
       )}

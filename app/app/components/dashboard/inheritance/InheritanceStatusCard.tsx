@@ -16,11 +16,11 @@ interface InheritanceStatusCardProps {
 }
 
 const Stat: FC<{ label: string; value: string }> = ({ label, value }) => (
-  <div className="rounded-lg border border-white/5 bg-black/20 px-3 py-2">
+  <div className="rounded-lg border border-border bg-black/20 px-3 py-2">
     <div className="text-[10px] uppercase tracking-wider text-muted">
       {label}
     </div>
-    <div className="mt-0.5 text-sm font-semibold text-white">{value}</div>
+    <div className="mt-0.5 text-sm font-semibold text-foreground">{value}</div>
   </div>
 );
 
@@ -38,9 +38,9 @@ export const InheritanceStatusCard: FC<InheritanceStatusCardProps> = ({
       : 0;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-white/5 bg-black/25 p-4">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-black/25 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
           Will of {short(owner)}
         </h3>
         <span

@@ -69,12 +69,12 @@ export const FileDropzone: FC<FileDropzoneProps> = ({
       onClick={onButtonClick}
       className={`relative rounded-2xl border border-dashed p-8 transition-all duration-300 text-center flex flex-col items-center justify-center cursor-pointer group ${
         !isActive
-          ? "border-white/5 bg-black/5 opacity-55 cursor-not-allowed"
+          ? "border-border bg-black/5 opacity-55 cursor-not-allowed"
           : isDragActive
             ? "border-[var(--accent)] bg-[var(--accent)]/[0.04] shadow-lg shadow-[var(--accent)]/5"
             : selectedFile
               ? "border-[var(--neon)]/40 bg-[var(--neon)]/[0.01]"
-              : "border-white/10 bg-black/20 hover:border-[var(--accent)]/40 hover:bg-white/[0.01]"
+              : "border-border bg-black/20 hover:border-[var(--accent)]/40 hover:bg-white/[0.01]"
       }`}
     >
       <input
@@ -92,7 +92,7 @@ export const FileDropzone: FC<FileDropzoneProps> = ({
           </div>
           <div className="min-w-0 text-center">
             {/* //showing the name of the file atmost 30 characters and if it exceeds then showing ... at the end */}
-            <p className="text-xs font-semibold text-white truncate max-w-full ">
+            <p className="text-xs font-semibold text-foreground truncate max-w-full ">
               {selectedFile.name.length > 30
                 ? `${selectedFile.name.slice(0, 27)}...`
                 : selectedFile.name}
@@ -107,18 +107,18 @@ export const FileDropzone: FC<FileDropzoneProps> = ({
               e.stopPropagation();
               onFileSelect(null);
             }}
-            className="flex items-center gap-1 text-[10px] text-[var(--danger)] hover:text-white bg-[var(--danger)]/10 border border-[var(--danger)]/20 hover:bg-[var(--danger)]/20 rounded-lg px-2.5 py-1 transition-all cursor-pointer"
+            className="flex items-center gap-1 text-[10px] text-[var(--danger)] hover:text-foreground bg-[var(--danger)]/10 border border-[var(--danger)]/20 hover:bg-[var(--danger)]/20 rounded-lg px-2.5 py-1 transition-all cursor-pointer"
           >
             <X className="size-3" /> Clear File
           </button>
         </div>
       ) : (
         <div className="space-y-4 relative z-10 flex flex-col items-center">
-          <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-white/5 text-muted group-hover:text-white group-hover:scale-105 group-hover:border-[var(--accent)]/20 group-hover:bg-[var(--accent)]/5 transition-all duration-300">
+          <div className="p-3.5 rounded-2xl bg-white/[0.02] border border-border text-muted group-hover:text-foreground group-hover:scale-105 group-hover:border-[var(--accent)]/20 group-hover:bg-[var(--accent)]/5 transition-all duration-300">
             <UploadCloud className="size-6" />
           </div>
           <div className="space-y-1">
-            <p className="text-xs font-semibold text-white">
+            <p className="text-xs font-semibold text-foreground">
               Drag & drop document here, or{" "}
               <span className="text-[var(--accent)] group-hover:underline">
                 browse

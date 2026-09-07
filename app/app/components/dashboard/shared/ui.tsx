@@ -4,6 +4,7 @@ import { useState, useCallback, type ReactNode } from "react";
 
 export { explorerTxUrl, humanizeError, short } from "@/lib/utils";
 import { explorerTxUrl, humanizeError } from "@/lib/utils";
+import { ScrambleText } from "@/app/components/fx/ScrambleText";
 
 export function Section({
   title,
@@ -15,10 +16,14 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-      <h2 className="text-lg font-semibold">{title}</h2>
-      {subtitle && <p className="mt-1 text-sm text-muted">{subtitle}</p>}
-      <div className="mt-4 flex flex-col gap-3">{children}</div>
+    <section className="border border-border">
+      <div className="border-b border-border px-5 py-3.5">
+        <h2 className="font-mono text-[12px] uppercase tracking-[0.14em]">
+          <ScrambleText text={title} speed={44} />
+        </h2>
+        {subtitle && <p className="mt-1.5 text-sm text-muted">{subtitle}</p>}
+      </div>
+      <div className="flex flex-col gap-3 p-5">{children}</div>
     </section>
   );
 }
@@ -31,8 +36,8 @@ export function Field({
   children: ReactNode;
 }) {
   return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="text-muted">{label}</span>
+    <label className="flex flex-col gap-1.5 text-sm">
+      <span className="label-mono">{label}</span>
       {children}
     </label>
   );
@@ -43,7 +48,7 @@ export function Input(props: React.InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={
-        "h-10 rounded-lg border border-white/10 bg-black/30 px-3 text-sm outline-none focus:border-white/30 " +
+        "h-10 border border-border bg-transparent px-3 font-mono text-[13px] outline-none transition-colors focus:border-border-strong " +
         (props.className ?? "")
       }
     />
@@ -95,7 +100,7 @@ export function TxButton({
 
   const toneCls =
     tone === "danger"
-      ? "btn-ghost text-red-300 border border-red-400/30"
+      ? "border border-danger/50 text-danger transition-colors hover:bg-danger hover:text-background"
       : tone === "ghost"
         ? "btn-ghost"
         : "btn-primary";
@@ -107,13 +112,13 @@ export function TxButton({
         onClick={run}
         disabled={busy || disabled}
         title={title}
-        className={`inline-flex h-10 items-center justify-center rounded-lg px-4 text-sm font-medium disabled:opacity-50 ${toneCls}`}
+        className={`inline-flex h-10 items-center justify-center px-4 text-sm disabled:opacity-50 ${toneCls}`}
       >
         {busy ? "Submitting…" : children}
       </button>
       {msg && (
         <span
-          className={`text-xs ${msg.kind === "ok" ? "text-emerald-400" : "text-red-400"}`}
+          className={`font-mono text-[11px] ${msg.kind === "ok" ? "text-neon" : "text-danger"}`}
         >
           {msg.text}
           {msg.sig && (

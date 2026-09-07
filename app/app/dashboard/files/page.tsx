@@ -29,7 +29,7 @@ const FilesPage: FC = () => {
         <WillSetupChecklist readiness={readiness} action="seal documents" />
       )}
 
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong">
+      <div className="rounded-2xl border border-border bg-white/[0.02] p-6 glass-strong">
         <MediaManager
           will={will}
           refresh={refresh}

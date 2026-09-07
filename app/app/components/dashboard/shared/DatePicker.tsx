@@ -18,7 +18,7 @@ export const DatePicker: FC<DatePickerProps> = ({ date, setDate, placeholder }) 
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="w-full h-9 justify-start text-left font-normal text-xs bg-black/40 border-white/10 hover:bg-white/[0.02] text-white hover:text-white rounded-lg cursor-pointer"
+          className="w-full h-9 justify-start text-left font-normal text-xs bg-black/40 border-border hover:bg-white/[0.02] text-foreground hover:text-foreground rounded-lg cursor-pointer"
         >
           <CalendarIcon className="mr-2 size-3.5 text-muted" />
           {date ? (
@@ -32,12 +32,12 @@ export const DatePicker: FC<DatePickerProps> = ({ date, setDate, placeholder }) 
           )}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 border-white/10 bg-[#0e0a1c] z-50 shadow-2xl" align="start">
+      <PopoverContent className="w-auto p-0 border-border-strong bg-surface z-50" align="start">
         <Calendar
           mode="single"
           selected={date}
           onSelect={setDate}
-          className="rounded-lg border-white/5"
+          className="rounded-lg border-border"
         />
       </PopoverContent>
     </Popover>

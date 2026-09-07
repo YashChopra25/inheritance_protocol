@@ -18,18 +18,18 @@ export const VaultLoader: FC = () => {
       {/* Glow aura background */}
       <div className="absolute size-72 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(108,70,255,0.18),transparent_70%)] blur-3xl pointer-events-none" />
       
-      <div className="max-w-md w-full rounded-2xl border border-white/10 bg-[#0e0a1c]/60 p-8 glass-strong glow-ring flex flex-col items-center gap-6 animate-float-slow text-center">
+      <div className="max-w-md w-full rounded-2xl border border-border-strong bg-surface p-8 flex flex-col items-center gap-6 text-center">
         {/* Glowing Holographic Key/Lock Element */}
         <div className="relative size-24 flex items-center justify-center">
           {/* Outer rotating orbit ring */}
           <div className="absolute inset-0 rounded-full border border-dashed border-[var(--accent)]/30 animate-spin-slow" />
           
           {/* Middle pulse ring */}
-          <div className="absolute inset-3 rounded-full border border-white/5 bg-white/[0.02]" />
+          <div className="absolute inset-3 rounded-full border border-border bg-white/[0.02]" />
           <div className="absolute inset-3 rounded-full bg-[var(--accent)]/5 animate-pulse-ring" />
           
           {/* Core Lock SVG Icon */}
-          <div className="relative size-12 rounded-xl bg-white/[0.03] border border-white/10 flex items-center justify-center shadow-lg">
+          <div className="relative size-12 rounded-xl bg-white/[0.03] border border-border flex items-center justify-center shadow-lg">
             <svg 
               className="size-6 text-[var(--neon)] animate-pulse" 
               fill="none" 
@@ -48,7 +48,7 @@ export const VaultLoader: FC = () => {
 
         {/* Text Details */}
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold tracking-tight text-white">
+          <h3 className="text-lg font-semibold tracking-tight text-foreground">
             Accessing Inheritance Vault
           </h3>
           <p className="text-xs text-muted max-w-[280px] mx-auto leading-relaxed">
@@ -57,7 +57,7 @@ export const VaultLoader: FC = () => {
         </div>
 
         {/* Cryptographic Step Logs */}
-        <div className="w-full bg-black/40 border border-white/5 rounded-xl p-4 font-mono text-[10px] text-left space-y-2">
+        <div className="w-full bg-black/40 border border-border rounded-xl p-4 font-mono text-[10px] text-left space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-muted">CONNECTING_SOLANA_RPC</span>
             <span className={step >= 1 ? "text-[var(--neon)]" : "text-muted animate-pulse"}>

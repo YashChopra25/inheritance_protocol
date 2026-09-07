@@ -27,9 +27,9 @@ export const InheritanceClaimCard: FC<InheritanceClaimCardProps> = ({
   const { phase } = timeline;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.01] p-4">
+    <div className="rounded-xl border border-border bg-white/[0.01] p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-white">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-foreground">
           Your Share
         </h3>
         <span className="rounded border border-[var(--accent)]/20 bg-[var(--accent)]/15 px-2 py-0.5 text-[9px] uppercase tracking-wide text-accent">

@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { ScrambleText } from "@/app/components/fx/ScrambleText";
+import { SectionHead } from "./SectionHead";
 
 const faqs = [
   {
@@ -31,69 +33,52 @@ const faqs = [
 
 export function Faq() {
   const [open, setOpen] = useState<number | null>(0);
-  return (
-    <section id="faq" className="relative">
-      <div className="mx-auto max-w-4xl px-5 sm:px-8 py-24">
-        <div className="text-center max-w-2xl mx-auto">
-          <p className="text-xs uppercase tracking-[0.18em] text-[var(--accent)]">
-            FAQ
-          </p>
-          <h2 className="mt-3 text-3xl sm:text-4xl tracking-tight font-semibold gradient-text">
-            The questions everyone asks first.
-          </h2>
-        </div>
 
-        <ul className="mt-12 space-y-3">
-          {faqs.map((f, i) => {
-            const isOpen = open === i;
-            return (
-              <li
-                key={f.q}
-                className={`rounded-2xl glass transition-colors ${
-                  isOpen ? "border-[var(--border-strong)]" : ""
+  return (
+    <section id="faq" className="border-b border-border">
+      <SectionHead eyebrow="FAQ" title="The questions everyone asks first." />
+
+      <ul className="border-t border-border">
+        {faqs.map((f, i) => {
+          const isOpen = open === i;
+          return (
+            <li key={f.q} className="border-b border-border">
+              <button
+                type="button"
+                onClick={() => setOpen(isOpen ? null : i)}
+                aria-expanded={isOpen}
+                className="group flex w-full items-baseline gap-5 px-5 py-5 text-left transition-colors hover:bg-[rgba(233,229,220,0.025)] sm:px-8"
+              >
+                <span className="index-mono shrink-0">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <span className="flex-1 text-[15px] font-medium">
+                  <ScrambleText text={f.q} speed={52} />
+                </span>
+                <span
+                  className={`shrink-0 font-mono text-sm transition-colors ${
+                    isOpen ? "text-accent" : "text-muted group-hover:text-foreground"
+                  }`}
+                  aria-hidden
+                >
+                  {isOpen ? "[−]" : "[+]"}
+                </span>
+              </button>
+              <div
+                className={`grid transition-[grid-template-rows] duration-300 ease-out ${
+                  isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
                 }`}
               >
-                <button
-                  type="button"
-                  onClick={() => setOpen(isOpen ? null : i)}
-                  aria-expanded={isOpen}
-                  className="flex w-full items-center justify-between gap-6 px-5 py-4 text-left"
-                >
-                  <span className="text-[15px] sm:text-base font-medium">
-                    {f.q}
-                  </span>
-                  <span
-                    className={`grid size-7 place-items-center rounded-full border border-[var(--border-strong)] transition-transform ${
-                      isOpen ? "rotate-45 bg-[rgba(183,148,255,0.15)]" : ""
-                    }`}
-                    aria-hidden
-                  >
-                    <svg viewBox="0 0 16 16" width="12" height="12" fill="none">
-                      <path
-                        d="M8 3v10M3 8h10"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                  </span>
-                </button>
-                <div
-                  className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-                    isOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]"
-                  }`}
-                >
-                  <div className="overflow-hidden">
-                    <p className="px-5 pb-5 text-sm leading-relaxed text-muted">
-                      {f.a}
-                    </p>
-                  </div>
+                <div className="overflow-hidden">
+                  <p className="max-w-3xl px-5 pb-6 pl-5 text-sm leading-relaxed text-muted sm:px-8 sm:pl-[76px]">
+                    {f.a}
+                  </p>
                 </div>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
     </section>
   );
 }

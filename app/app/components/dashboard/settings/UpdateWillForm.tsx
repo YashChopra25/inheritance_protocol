@@ -133,7 +133,7 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
         <button
           type="button"
           onClick={revert}
-          className="self-start text-[11px] font-semibold text-muted underline hover:text-white"
+          className="self-start text-[11px] font-semibold text-muted underline hover:text-foreground"
         >
           Revert to current values
         </button>

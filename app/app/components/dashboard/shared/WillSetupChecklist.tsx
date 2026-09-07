@@ -15,10 +15,10 @@ interface WillSetupChecklistProps {
 
 const Row: FC<{ req: Requirement }> = ({ req }) => {
   const tone = req.done
-    ? "border-white/5 bg-white/[0.02]"
+    ? "border-border bg-white/[0.02]"
     : req.blocking
       ? "border-amber-500/25 bg-amber-500/[0.06]"
-      : "border-white/10 bg-white/[0.02]";
+      : "border-border bg-white/[0.02]";
 
   return (
     <li
@@ -31,7 +31,7 @@ const Row: FC<{ req: Requirement }> = ({ req }) => {
               ? "border-[var(--neon)]/40 bg-[var(--neon)]/10 text-[var(--neon)]"
               : req.blocking
                 ? "border-amber-400/40 bg-amber-400/10 text-amber-300"
-                : "border-white/15 bg-white/5 text-muted"
+                : "border-border-strong bg-white/5 text-muted"
           }`}
         >
           {req.done ? (
@@ -43,12 +43,12 @@ const Row: FC<{ req: Requirement }> = ({ req }) => {
         <div className="min-w-0">
           <p
             className={`text-sm font-medium ${
-              req.done ? "text-white/55 line-through" : "text-white"
+              req.done ? "text-white/55 line-through" : "text-foreground"
             }`}
           >
             {req.title}
             {!req.done && !req.blocking && (
-              <span className="ml-2 rounded-full border border-white/10 px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted">
+              <span className="ml-2 rounded-full border border-border px-1.5 py-0.5 align-middle text-[10px] font-semibold uppercase tracking-wide text-muted">
                 Recommended
               </span>
             )}
@@ -64,7 +64,7 @@ const Row: FC<{ req: Requirement }> = ({ req }) => {
       {!req.done && (
         <Link
           href={req.href}
-          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-white/10 px-3 text-xs font-semibold text-white/85 transition hover:border-white/25 hover:bg-white/5 hover:text-white"
+          className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border px-3 text-xs font-semibold text-white/85 transition hover:border-border-strong hover:bg-white/5 hover:text-foreground"
         >
           {req.cta}
           <ArrowRight className="size-3.5" />
@@ -98,15 +98,15 @@ export const WillSetupChecklist: FC<WillSetupChecklistProps> = ({
       className={`rounded-2xl border p-6 glass-strong ${
         blocked
           ? "border-amber-500/30 bg-amber-500/[0.04]"
-          : "border-white/10 bg-white/[0.02]"
+          : "border-border bg-white/[0.02]"
       }`}
     >
-      <div className="flex items-start gap-3 border-b border-white/5 pb-4">
+      <div className="flex items-start gap-3 border-b border-border pb-4">
         <div
           className={`rounded-xl border p-2 ${
             blocked
               ? "border-amber-500/25 bg-amber-500/10 text-amber-300"
-              : "border-white/10 bg-white/5 text-muted"
+              : "border-border bg-white/5 text-muted"
           }`}
         >
           {blocked ? (
@@ -116,7 +116,7 @@ export const WillSetupChecklist: FC<WillSetupChecklistProps> = ({
           )}
         </div>
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-white">
+          <h3 className="text-base font-semibold text-foreground">
             {blocked
               ? `Finish setting up your will before you ${action}`
               : "Your will is ready"}

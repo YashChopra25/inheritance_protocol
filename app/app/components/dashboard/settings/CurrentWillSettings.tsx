@@ -41,11 +41,11 @@ const Row: FC<{ label: string; children: ReactNode; hint?: string }> = ({
   children,
   hint,
 }) => (
-  <div className="flex flex-col gap-1 rounded-lg border border-white/5 bg-black/20 px-3.5 py-2.5">
+  <div className="flex flex-col gap-1 rounded-lg border border-border bg-black/20 px-3.5 py-2.5">
     <span className="text-[10px] uppercase tracking-wider text-muted">
       {label}
     </span>
-    <span className="text-sm font-semibold text-white">{children}</span>
+    <span className="text-sm font-semibold text-foreground">{children}</span>
     {hint && <span className="text-[11px] text-muted">{hint}</span>}
   </div>
 );
@@ -72,10 +72,10 @@ export const CurrentWillSettings: FC<CurrentWillSettingsProps> = ({
     will.custodianCount > 0 && will.minApprovals <= will.custodianCount;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-5">
+    <div className="rounded-xl border border-border bg-white/[0.02] p-5">
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h4 className="text-sm font-semibold text-white">
+          <h4 className="text-sm font-semibold text-foreground">
             Current will settings
           </h4>
           <p className="mt-0.5 text-xs text-muted">

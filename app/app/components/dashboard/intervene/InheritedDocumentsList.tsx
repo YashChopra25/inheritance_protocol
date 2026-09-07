@@ -21,8 +21,8 @@ export const InheritedDocumentsList: FC<InheritedDocumentsListProps> = ({ media 
   }
 
   return (
-    <div className="rounded-xl border border-white/5 bg-black/10 p-4">
-      <h4 className="text-xs font-semibold text-white mb-2.5 uppercase tracking-wider">
+    <div className="rounded-xl border border-border bg-black/10 p-4">
+      <h4 className="text-xs font-semibold text-foreground mb-2.5 uppercase tracking-wider">
         Inherited documents & assets ({media.length})
       </h4>
       <ul className="flex flex-col gap-2.5">
@@ -35,7 +35,7 @@ export const InheritedDocumentsList: FC<InheritedDocumentsListProps> = ({ media 
             return (
               <li
                 key={m.publicKey.toBase58()}
-                className="flex flex-col gap-1 rounded-lg border border-white/5 bg-black/20 px-3.5 py-2.5 text-xs transition-colors hover:bg-black/30"
+                className="flex flex-col gap-1 rounded-lg border border-border bg-black/20 px-3.5 py-2.5 text-xs transition-colors hover:bg-black/30"
               >
                 <div className="flex items-center justify-between gap-3 w-full">
                   <div className="min-w-0 flex-1">
@@ -50,7 +50,7 @@ export const InheritedDocumentsList: FC<InheritedDocumentsListProps> = ({ media 
                     <button
                       type="button"
                       onClick={() => setPreviewItem({ cid, type })}
-                      className="text-[11px] font-semibold text-accent hover:text-white transition-colors"
+                      className="text-[11px] font-semibold text-accent hover:text-foreground transition-colors"
                     >
                       Preview Content
                     </button>

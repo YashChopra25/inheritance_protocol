@@ -44,7 +44,7 @@ const OverviewPage: FC = () => {
       </div>
 
       <div className="flex flex-col gap-6 lg:sticky lg:top-20">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
+        <div className="rounded-2xl border border-border bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] self-start mb-2 pl-1">
             Active Vault Visualizer
           </h3>
@@ -62,7 +62,7 @@ const OverviewPage: FC = () => {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-5 glass">
+        <div className="rounded-2xl border border-border bg-white/[0.01] p-5 glass">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--warn)]">
             Trustless Architecture
           </h3>

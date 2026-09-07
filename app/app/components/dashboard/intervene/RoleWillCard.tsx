@@ -21,7 +21,7 @@ export const RoleWillCard: FC<RoleWillCardProps> = ({
   onSelect,
 }) => {
   const statusCls =
-    STATUS_CLS[will.status] ?? "bg-white/10 border-white/25 text-white/85";
+    STATUS_CLS[will.status] ?? "bg-white/10 border-border-strong text-white/85";
 
   return (
     <button
@@ -30,7 +30,7 @@ export const RoleWillCard: FC<RoleWillCardProps> = ({
       className={`flex w-full flex-col gap-2 rounded-lg border p-3 text-left transition ${
         selected
           ? "border-(--accent)/40 bg-(--accent)/5"
-          : "border-white/5 bg-black/20 hover:border-white/15"
+          : "border-border bg-black/20 hover:border-border-strong"
       }`}
     >
       <div className="flex items-center justify-between gap-2">

@@ -133,7 +133,7 @@ export const DeathConfirmationBanner: FC<DeathConfirmationBannerProps> = ({
             type="button"
             onClick={onRevoke}
             disabled={busy}
-            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-red-500/90 px-4 text-sm font-semibold text-white transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex h-10 shrink-0 items-center justify-center rounded-lg bg-red-500/90 px-4 text-sm font-semibold text-foreground transition hover:bg-red-500 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {busy ? "Cancelling…" : "I'm alive — cancel this"}
           </button>

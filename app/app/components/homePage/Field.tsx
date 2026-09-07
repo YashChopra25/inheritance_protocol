@@ -7,11 +7,9 @@ interface FieldProps {
 
 export const Field: FC<FieldProps> = ({ label, children }) => {
   return (
-    <label className="block rounded-xl bg-white/[0.03] border border-[var(--border)] px-3.5 py-2.5 focus-within:border-[var(--border-strong)] transition-colors">
-      <div className="text-[10px] uppercase tracking-wider text-muted">
-        {label}
-      </div>
-      <div className="mt-1 flex items-center gap-2">{children}</div>
+    <label className="block border border-border px-3.5 py-3 transition-colors focus-within:border-border-strong">
+      <div className="label-mono">{label}</div>
+      <div className="mt-2 flex items-center gap-2">{children}</div>
     </label>
   );
 };
