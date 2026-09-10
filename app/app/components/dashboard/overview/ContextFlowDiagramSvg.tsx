@@ -17,7 +17,7 @@ export const ContextFlowDiagramSvg: FC<ContextFlowDiagramSvgProps> = ({
   pathClass,
 }) => {
   return (
-    <div className="relative w-full h-[220px] flex items-center justify-center bg-black/15 rounded-xl border border-white/5 overflow-hidden">
+    <div className="relative w-full h-[220px] flex items-center justify-center bg-black/15 rounded-xl border border-border overflow-hidden">
       <svg className="w-full h-full" viewBox="0 0 320 240">
         <defs>
           {/* Gradients for glowing node highlights */}

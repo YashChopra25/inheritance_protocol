@@ -38,10 +38,10 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
   };
 
   return (
-    <div className="md:col-span-3 rounded-2xl border border-white/10 bg-white/[0.02] p-5 space-y-4">
+    <div className="md:col-span-3 rounded-2xl border border-border bg-white/[0.02] p-5 space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-sm font-semibold text-white">
+          <h3 className="text-sm font-semibold text-foreground">
             Active Token Escrows ({tokenVaultsCount})
           </h3>
           <p className="text-[11px] text-muted mt-0.5 font-mono">
@@ -51,7 +51,7 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
         <button
           onClick={refreshBalances}
           disabled={loadingBalances}
-          className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-white"
+          className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-foreground"
           title="Refresh balances"
         >
           <RefreshCw
@@ -105,7 +105,7 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
 };
 
 const EmptyState: FC = () => (
-  <div className="rounded-xl border border-dashed border-white/10 p-8 text-center space-y-2">
+  <div className="rounded-xl border border-dashed border-border p-8 text-center space-y-2">
     <Coins className="size-8 text-muted mx-auto opacity-30" />
     <p className="text-xs text-muted">
       No SPL token vaults registered. Fill the form to secure your tokens.
@@ -114,7 +114,7 @@ const EmptyState: FC = () => (
 );
 
 const InfoFooter: FC = () => (
-  <div className="flex items-start gap-2 text-[10px] text-muted leading-relaxed bg-white/[0.01] border border-white/5 rounded-xl p-3.5">
+  <div className="flex items-start gap-2 text-[10px] text-muted leading-relaxed bg-white/[0.01] border border-border rounded-xl p-3.5">
     <AlertCircle className="size-3.5 text-[var(--accent)] shrink-0 mt-0.5" />
     <p>
       SPL tokens are transferred into program-derived vaults. To add native
@@ -148,10 +148,10 @@ const VaultRow: FC<VaultRowProps> = ({
   onCancelDelete,
   onConfirmDelete,
 }) => (
-  <div className="flex items-center justify-between p-3 rounded-xl border border-white/5 bg-black/10 hover:border-white/10 transition-all text-xs">
+  <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-black/10 hover:border-border-strong transition-all text-xs">
     <div className="space-y-1">
       <div className="flex items-center gap-1.5">
-        <span className="font-semibold text-white">{v.symbol}</span>
+        <span className="font-semibold text-foreground">{v.symbol}</span>
         <span className="text-[10px] text-muted">{v.name}</span>
       </div>
       <div className="text-[9px] text-muted font-mono flex items-center gap-1">
@@ -160,7 +160,7 @@ const VaultRow: FC<VaultRowProps> = ({
           href={explorerTxUrl(v.publicKey.toBase58())}
           target="_blank"
           rel="noreferrer"
-          className="hover:text-white"
+          className="hover:text-foreground"
         >
           <ExternalLink className="size-2.5" />
         </a>
@@ -225,7 +225,7 @@ const DeleteButton: FC<DeleteButtonProps> = ({
         <button
           onClick={onCancel}
           disabled={removing}
-          className="p-1.5 rounded-lg hover:bg-white/5 text-muted hover:text-white transition-colors cursor-pointer"
+          className="p-1.5 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors cursor-pointer"
         >
           <X className="size-3" />
         </button>

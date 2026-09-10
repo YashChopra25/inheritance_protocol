@@ -35,9 +35,9 @@ export const MediaPreview: FC<MediaPreviewProps> = ({ cid, onClose }) => {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-white/10 bg-surface-2 shadow-2xl glass-strong">
+      <div className="relative w-full max-w-3xl overflow-hidden rounded-2xl border border-border-strong bg-surface">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-white/10 px-5 py-4 bg-black/20">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-black/20">
           <div>
             <h3 className="text-md font-semibold text-foreground truncate max-w-md">
               {fileName ?? "Sealed document"}
@@ -48,7 +48,7 @@ export const MediaPreview: FC<MediaPreviewProps> = ({ cid, onClose }) => {
           </div>
           <button
             onClick={onClose}
-            className="rounded-lg p-1.5 text-muted hover:bg-white/15 hover:text-white transition-colors cursor-pointer"
+            className="rounded-lg p-1.5 text-muted hover:bg-white/15 hover:text-foreground transition-colors cursor-pointer"
             aria-label="Close preview"
           >
             <svg className="size-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -61,7 +61,7 @@ export const MediaPreview: FC<MediaPreviewProps> = ({ cid, onClose }) => {
         <div className="p-6 flex flex-col items-center justify-center min-h-[250px] max-h-[60vh] overflow-y-auto">
           {loading && (
             <div className="flex flex-col items-center gap-3">
-              <div className="size-8 animate-spin rounded-full border-2 border-white/30 border-t-accent shrink-0" />
+              <div className="size-8 animate-spin rounded-full border-2 border-border-strong border-t-accent shrink-0" />
               <p className="text-xs text-muted animate-pulse">
                 Fetching and decrypting…
               </p>
@@ -92,7 +92,7 @@ export const MediaPreview: FC<MediaPreviewProps> = ({ cid, onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-white/10 px-5 py-4 bg-black/20 text-xs">
+        <div className="flex items-center justify-between border-t border-border px-5 py-4 bg-black/20 text-xs">
           <div className="text-muted">
             Type: <span className="font-mono text-foreground">{mediaType}</span>
             {fileSize && (
@@ -113,7 +113,7 @@ export const MediaPreview: FC<MediaPreviewProps> = ({ cid, onClose }) => {
             )}
             <button
               onClick={onClose}
-              className="inline-flex h-9 items-center justify-center rounded-lg px-4 font-medium bg-white/10 hover:bg-white/15 text-white transition-colors cursor-pointer"
+              className="inline-flex h-9 items-center justify-center rounded-lg px-4 font-medium bg-white/10 hover:bg-white/15 text-foreground transition-colors cursor-pointer"
             >
               Close
             </button>

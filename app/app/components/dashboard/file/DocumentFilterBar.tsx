@@ -27,7 +27,7 @@ export const DocumentFilterBar: FC<DocumentFilterBarProps> = ({
           placeholder="Search by name or CID..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full h-9 pl-9 pr-3 bg-black/40 border border-white/10 rounded-lg text-xs text-white placeholder-muted focus:outline-none focus:border-[var(--accent)]/50 transition-colors"
+          className="w-full h-9 pl-9 pr-3 bg-black/40 border border-border rounded-lg text-xs text-foreground placeholder-muted focus:outline-none focus:border-[var(--accent)]/50 transition-colors"
         />
       </div>
       

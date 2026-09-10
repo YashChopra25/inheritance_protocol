@@ -214,42 +214,42 @@ export function useDemoState() {
       case "active":
         return {
           label: "Active",
-          dot: "bg-[var(--neon)] shadow-[0_0_12px_#9efce0]",
-          text: "text-[var(--neon)]",
-          bg: "bg-[rgba(158,252,224,0.08)]",
-          border: "border-[rgba(158,252,224,0.25)]",
+          dot: "bg-neon",
+          text: "text-neon",
+          bg: "bg-[rgba(95,191,143,0.07)]",
+          border: "border-[rgba(95,191,143,0.35)]",
         };
       case "at-risk":
         return {
-          label: "At Risk",
-          dot: "bg-[var(--warn)] shadow-[0_0_12px_#ffb86b]",
-          text: "text-[var(--warn)]",
-          bg: "bg-[rgba(255,184,107,0.08)]",
-          border: "border-[rgba(255,184,107,0.25)]",
+          label: "At risk",
+          dot: "bg-warn",
+          text: "text-warn",
+          bg: "bg-[rgba(217,154,58,0.07)]",
+          border: "border-[rgba(217,154,58,0.35)]",
         };
       case "triggered":
         return {
           label: "Claimable",
-          dot: "bg-[var(--danger)] shadow-[0_0_12px_#ff6b9a]",
-          text: "text-[var(--danger)]",
-          bg: "bg-[rgba(255,107,154,0.1)]",
-          border: "border-[rgba(255,107,154,0.3)]",
+          dot: "bg-danger",
+          text: "text-danger",
+          bg: "bg-[rgba(209,91,78,0.07)]",
+          border: "border-[rgba(209,91,78,0.4)]",
         };
       case "claimed":
         return {
           label: "Claimed",
-          dot: "bg-[var(--accent)] shadow-[0_0_12px_#b794ff]",
-          text: "text-[var(--accent)]",
-          bg: "bg-[rgba(183,148,255,0.1)]",
-          border: "border-[rgba(183,148,255,0.3)]",
+          dot: "bg-accent",
+          text: "text-accent",
+          bg: "bg-[rgba(217,154,58,0.07)]",
+          border: "border-[rgba(217,154,58,0.4)]",
         };
       default:
         return {
           label: "Idle",
-          dot: "bg-white/60",
+          dot: "bg-faint",
           text: "text-muted",
-          bg: "bg-white/[0.04]",
-          border: "border-white/10",
+          bg: "bg-transparent",
+          border: "border-border-strong",
         };
     }
   }, [state.status]);

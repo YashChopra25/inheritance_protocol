@@ -13,16 +13,16 @@ const SettingsPage: FC = () => {
 
   if (!will) {
     return (
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong max-w-4xl mx-auto w-full animate-fade-in">
+      <div className="rounded-2xl border border-border bg-white/[0.02] p-6 glass-strong max-w-4xl mx-auto w-full animate-fade-in">
         <CreateWillForm refresh={refresh} />
       </div>
     );
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-6 glass-strong max-w-4xl mx-auto w-full flex flex-col gap-8 animate-fade-in">
+    <div className="rounded-2xl border border-border bg-white/[0.02] p-6 glass-strong max-w-4xl mx-auto w-full flex flex-col gap-8 animate-fade-in">
       <div>
-        <h3 className="text-base font-semibold text-white">Will Configurations</h3>
+        <h3 className="text-base font-semibold text-foreground">Will Configurations</h3>
         <p className="mt-1 text-xs text-muted leading-relaxed">
           Adjust inactivity limits and custodian approvals.
         </p>
@@ -31,7 +31,7 @@ const SettingsPage: FC = () => {
       <CurrentWillSettings data={data!} status={status ?? "unknown"} />
 
       <div className="flex flex-col gap-3">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-white">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
           Change settings
         </h4>
         <UpdateWillForm refresh={refresh} isActive={isActive} />

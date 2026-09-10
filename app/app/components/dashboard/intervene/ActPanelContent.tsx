@@ -61,15 +61,15 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
       {myBeneficiary && <RecipientKeyCard ownerAddress={owner.toBase58()} />}
 
       {/* Will Overview Tag */}
-      <div className="flex flex-col gap-3 rounded-xl border border-white/5 bg-black/25 p-4">
-        <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Will Account Status</h4>
+      <div className="flex flex-col gap-3 rounded-xl border border-border bg-black/25 p-4">
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Will Account Status</h4>
         <div className="flex flex-wrap items-center gap-3 mt-1">
           <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[10px] font-semibold border uppercase tracking-wider ${
             status === "active"
               ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-400"
               : status === "claimable"
               ? "bg-red-500/10 border-red-500/30 text-red-400 animate-pulse"
-              : "bg-white/10 border-white/25 text-white/85"
+              : "bg-white/10 border-border-strong text-white/85"
           }`}>
             <span className={`size-1.5 rounded-full ${status === "active" ? "bg-emerald-500" : "bg-red-500"}`} />
             {status}
@@ -82,9 +82,9 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
 
       {/* Custodian actions */}
       {myCustodian ? (
-        <div className="rounded-xl border border-white/10 bg-white/1 p-4">
+        <div className="rounded-xl border border-border bg-white/1 p-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Your Role: Custodian</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Your Role: Custodian</h4>
             <span className="rounded bg-white/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-white/80">Authorized</span>
           </div>
           <p className="mt-2 text-xs text-muted leading-relaxed">
@@ -124,9 +124,9 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
 
       {/* Beneficiary actions */}
       {myBeneficiary && (
-        <div className="rounded-xl border border-white/10 bg-white/1 p-4">
+        <div className="rounded-xl border border-border bg-white/1 p-4">
           <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-white uppercase tracking-wider">Your Role: Beneficiary</h4>
+            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Your Role: Beneficiary</h4>
             <span className="rounded bg-(--accent)/15 border border-(--accent)/20 px-2 py-0.5 text-[9px] uppercase tracking-wide text-accent">
               Heir · {myBeneficiary.account.allocationPercentage / 100}% share
             </span>

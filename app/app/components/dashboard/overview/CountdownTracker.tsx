@@ -47,7 +47,7 @@ export const CountdownTracker: FC<CountdownTrackerProps> = ({
   };
 
   return (
-    <div className="mt-4 rounded-xl border border-white/5 bg-white/1 p-4">
+    <div className="mt-4 rounded-xl border border-border bg-white/1 p-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           <span
@@ -88,13 +88,13 @@ export const CountdownTracker: FC<CountdownTrackerProps> = ({
           <p className="text-[10px] uppercase tracking-wider text-muted">
             Time until will becomes claimable
           </p>
-          <p className="mt-1 font-mono text-xl sm:text-2xl tabular-nums tracking-wide text-white">
+          <p className="mt-1 font-mono text-xl sm:text-2xl tabular-nums tracking-wide text-foreground">
             {formatDuration(remainingMs)}
           </p>
         </div>
         <div className="text-right text-xs text-muted">
           Total window:{" "}
-          <span className="font-mono text-white">
+          <span className="font-mono text-foreground">
             {Math.round(threshold / 86400)} days
           </span>
         </div>

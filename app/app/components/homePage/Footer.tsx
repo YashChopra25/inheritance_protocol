@@ -1,5 +1,12 @@
+"use client";
+
+import { AsciiArt } from "@/app/components/fx/AsciiArt";
+import { MARK_CHAIN } from "@/app/components/fx/artwork";
+import { ScrambleText, ScrambleZone } from "@/app/components/fx/ScrambleText";
 import { Logo } from "./Logo";
 
+/** Only destinations that actually exist. Anything without a page behind it
+ *  is worse than a shorter footer. */
 const cols: { title: string; links: { label: string; href: string }[] }[] = [
   {
     title: "Product",
@@ -11,65 +18,61 @@ const cols: { title: string; links: { label: string; href: string }[] }[] = [
     ],
   },
   {
-    title: "Trust",
+    title: "Learn",
     links: [
       { label: "Security", href: "#security" },
-      { label: "Audits", href: "#" },
-      { label: "Open source", href: "#" },
-      { label: "Status", href: "#" },
-    ],
-  },
-  {
-    title: "Resources",
-    links: [
-      { label: "Docs", href: "#" },
-      { label: "Whitepaper", href: "#" },
       { label: "FAQ", href: "#faq" },
-      { label: "Brand kit", href: "#" },
     ],
   },
 ];
 
 export function Footer() {
   return (
-    <footer className="relative border-t border-[var(--border)]">
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 py-14">
-        <div className="grid grid-cols-1 md:grid-cols-[1.4fr_repeat(3,1fr)] gap-10">
-          <div>
+    <footer className="relative">
+      <div className="grid grid-cols-1 md:grid-cols-[1.5fr_repeat(2,1fr)]">
+        <div className="border-b border-border px-5 py-10 sm:px-8 md:border-b-0 md:border-r">
+          <ScrambleZone>
             <Logo />
-            <p className="mt-4 max-w-xs text-sm text-muted leading-relaxed">
-              Decentralized inheritance on Solana. No lawyers. No custody. Just
-              signed rules and chain time.
-            </p>
-          </div>
-          {cols.map((c) => (
-            <div key={c.title}>
-              <p className="text-xs uppercase tracking-wider text-muted">
-                {c.title}
-              </p>
-              <ul className="mt-4 space-y-2.5 text-sm">
-                {c.links.map((l) => (
-                  <li key={l.label}>
-                    <a
-                      href={l.href}
-                      className="text-foreground/80 hover:text-foreground transition-colors"
-                    >
-                      {l.label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-t border-[var(--border)] pt-6 text-xs text-muted">
-          <p>© 2026 VaultWill Labs. Not legal advice.</p>
-          <p>
-            Built on <span className="text-foreground">Solana</span> · Devnet
-            program{" "}
-            <span className="font-mono text-foreground/80">VWiLLpr0t…aZ8</span>
+          </ScrambleZone>
+          <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted">
+            <ScrambleText
+              text="Decentralized inheritance on Solana. No lawyers. No custody. Just signed rules and chain time."
+              speed={150}
+            />
           </p>
+          <div className="mt-8 w-48 text-muted">
+            <AsciiArt art={MARK_CHAIN} fontSize={13} blur={0.2} bite={4} className="font-mono" />
+          </div>
         </div>
+
+        {cols.map((c) => (
+          <div
+            key={c.title}
+            className="border-b border-border px-5 py-10 last:border-b-0 sm:px-8 md:border-b-0 md:border-r md:last:border-r-0"
+          >
+            <p className="label-mono">{c.title}</p>
+            <ul className="mt-5 space-y-3 text-sm">
+              {c.links.map((l) => (
+                <li key={l.label}>
+                  <a
+                    href={l.href}
+                    className="text-muted transition-colors hover:text-foreground"
+                  >
+                    <ScrambleText text={l.label} speed={40} />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <div className="flex flex-col items-start justify-between gap-3 border-t border-border px-5 py-5 label-mono sm:flex-row sm:items-center sm:px-8">
+        <p>© 2026 VaultWill Labs — not legal advice.</p>
+        <p>
+          Built on Solana · devnet program{" "}
+          <span className="text-foreground">VWiLLpr0t…aZ8</span>
+        </p>
       </div>
     </footer>
   );

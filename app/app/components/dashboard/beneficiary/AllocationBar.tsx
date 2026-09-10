@@ -42,7 +42,7 @@ export const AllocationBar: FC<AllocationBarProps> = ({ slices, totalBps }) => {
   const allocatedPct = totalBps / 100;
 
   return (
-    <div className="rounded-xl border border-white/10 bg-white/[0.02] p-4">
+    <div className="rounded-xl border border-border bg-white/[0.02] p-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted">
@@ -50,7 +50,7 @@ export const AllocationBar: FC<AllocationBarProps> = ({ slices, totalBps }) => {
           </p>
           <p
             className={`mt-0.5 text-2xl font-bold leading-none tabular-nums ${
-              unallocatedBps === 0 ? "text-[var(--neon)]" : "text-white"
+              unallocatedBps === 0 ? "text-[var(--neon)]" : "text-foreground"
             }`}
           >
             {allocatedPct}%

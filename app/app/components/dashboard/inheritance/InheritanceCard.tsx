@@ -38,7 +38,7 @@ export const InheritanceCard: FC<InheritanceCardProps> = ({ item }) => {
       className={`group flex items-center gap-4 rounded-xl border p-4 transition-colors ${
         actionable
           ? "border-[var(--accent)]/25 bg-[var(--accent)]/[0.03] hover:border-[var(--accent)]/40"
-          : "border-white/5 bg-black/20 hover:border-white/15 hover:bg-black/30"
+          : "border-border bg-black/20 hover:border-border-strong hover:bg-black/30"
       }`}
     >
       <Icon className={`size-4 shrink-0 ${meta.iconCls}`} />
@@ -92,7 +92,7 @@ export const InheritanceCard: FC<InheritanceCardProps> = ({ item }) => {
         </div>
       </div>
 
-      <ChevronRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-white" />
+      <ChevronRight className="size-4 shrink-0 text-muted transition-transform group-hover:translate-x-0.5 group-hover:text-foreground" />
     </Link>
   );
 };

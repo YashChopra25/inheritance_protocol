@@ -24,7 +24,7 @@ interface InheritanceDetailProps {
 const NO_TOKEN_VAULTS: ProgramItem<TokenVaultAccount>[] = [];
 
 const Notice: FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="rounded-xl border border-white/5 bg-black/10 p-4 text-xs leading-relaxed text-muted">
+  <p className="rounded-xl border border-border bg-black/10 p-4 text-xs leading-relaxed text-muted">
     {children}
   </p>
 );
@@ -65,7 +65,7 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
     if (loading && !data) {
       return (
         <div className="flex items-center gap-2 py-6 text-xs text-muted">
-          <div className="size-3 animate-spin rounded-full border-2 border-white/30 border-t-accent" />
+          <div className="size-3 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
           <span>Loading will…</span>
         </div>
       );
@@ -134,7 +134,7 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
             </Notice>
           </>
         ) : (
-          <div className="flex items-center gap-3 rounded-xl border border-white/5 bg-black/10 p-4">
+          <div className="flex items-center gap-3 rounded-xl border border-border bg-black/10 p-4">
             <Lock className="size-4 shrink-0 text-muted" />
             <p className="text-xs leading-relaxed text-muted">
               {data.will.mediaCount} sealed{" "}
@@ -154,7 +154,7 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
     <div className="flex flex-col gap-5">
       <Link
         href={INHERITANCE_ROOT}
-        className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-white"
+        className="inline-flex w-fit items-center gap-1.5 text-[11px] font-semibold text-muted transition-colors hover:text-foreground"
       >
         <ArrowLeft className="size-3.5" />
         All inheritances

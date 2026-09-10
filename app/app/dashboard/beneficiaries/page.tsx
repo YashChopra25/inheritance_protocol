@@ -20,7 +20,7 @@ const BeneficiariesPage: FC = () => {
   }
 
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/2 p-6 glass-strong max-w-4xl mx-auto w-full animate-fade-in">
+    <div className="rounded-2xl border border-border bg-white/2 p-6 glass-strong max-w-4xl mx-auto w-full animate-fade-in">
       <BeneficiaryManager
         refresh={refresh}
         beneficiaries={data?.beneficiaries ?? []}

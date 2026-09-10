@@ -1,5 +1,7 @@
 import { FC } from "react";
 import { LogEntry } from "@/app/types/demo.types";
+import { ScrambleText } from "@/app/components/fx/ScrambleText";
+import { SquigglyText } from "@/app/components/fx/SquigglyText";
 
 interface DemoInfoProps {
   log: LogEntry[];
@@ -7,43 +9,54 @@ interface DemoInfoProps {
 
 export const DemoInfo: FC<DemoInfoProps> = ({ log }) => {
   return (
-    <div className="lg:sticky lg:top-28">
-      <p className="text-xs uppercase tracking-[0.18em] text-accent">Interactive demo</p>
-      <h2 className="mt-3 text-3xl sm:text-4xl tracking-tight font-semibold gradient-text">
-        Walk through a full will lifecycle.
-      </h2>
-      <p className="mt-4 text-muted leading-relaxed">
-        Connect a simulated Phantom wallet, seal a will, and check in to stay active. Or skip
-        the wait — toggle <span className="text-foreground">Simulate Death</span> to have the
-        custodian quorum confirm, then watch your beneficiary unlock the sealed documents.
+    <div className="lg:sticky lg:top-20">
+      <p className="label-mono text-accent">
+        <ScrambleText text="Interactive demo" trigger="view" speed={40} />
       </p>
-      <p className="mt-3 text-xs text-muted">
-        Demo time runs at 3,600× real-time so the countdown is visible. No transactions are broadcast.
+      <SquigglyText
+        as="h2"
+        rest={0.7}
+        peak={6}
+        className="mt-4 block text-3xl tracking-tight sm:text-[38px]"
+      >
+        <ScrambleText text="Walk through a full will lifecycle." trigger="view" speed={72} />
+      </SquigglyText>
+      <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
+        <ScrambleText
+          text="Connect a simulated wallet, seal a will, and check in to stay active. Or skip the wait — trip the switch and watch the custodian quorum confirm, then your beneficiary unlock the sealed documents."
+          speed={200}
+        />
+      </p>
+      <p className="mt-3 label-mono">
+        Demo time runs at 3,600× · no transactions are broadcast
       </p>
 
-      <div className="mt-8 rounded-xl glass p-4 text-sm">
-        <p className="text-xs uppercase tracking-wider text-muted">On-chain log</p>
-        <ul className="mt-3 space-y-2 font-mono text-[12px]">
+      <div className="mt-8 border border-border">
+        <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+          <span className="label-mono">On-chain log</span>
+          <span className="index-mono">{String(log.length).padStart(2, "0")}</span>
+        </div>
+        <ul className="max-h-72 overflow-y-auto px-4 py-3 font-mono text-[11px] leading-relaxed">
           {log.length === 0 ? (
-            <li className="text-muted">{"// awaiting wallet connection…"}</li>
+            <li className="text-faint caret">awaiting wallet connection</li>
           ) : (
             log.map((l) => (
-              <li key={l.id} className="flex items-start gap-2 text-muted">
+              <li key={l.id} className="flex items-start gap-2 py-0.5 text-muted">
                 <span
                   className={
                     l.kind === "ok"
-                      ? "text-[var(--neon)]"
+                      ? "text-neon"
                       : l.kind === "warn"
-                      ? "text-[var(--warn)]"
-                      : l.kind === "err"
-                      ? "text-[var(--danger)]"
-                      : "text-[var(--accent)]"
+                        ? "text-warn"
+                        : l.kind === "err"
+                          ? "text-danger"
+                          : "text-accent"
                   }
                 >
                   ›
                 </span>
                 <span>
-                  <span className="text-foreground/70">
+                  <span className="text-faint">
                     {new Date(l.t).toLocaleTimeString([], { hour12: false })}
                   </span>{" "}
                   {l.msg}

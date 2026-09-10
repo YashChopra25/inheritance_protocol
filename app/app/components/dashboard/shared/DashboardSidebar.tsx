@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Logo } from "@/app/components/homePage/Logo";
 import { useDashboard } from "@/hooks/useDashboard";
+import { ScrambleText, ScrambleZone } from "@/app/components/fx/ScrambleText";
 
 const links = [
   { href: "/dashboard/overview", label: "Overview", icon: LayoutDashboard },
@@ -37,15 +38,17 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({ onClose }) => {
   const will = data?.will;
 
   return (
-    <aside className="flex flex-col h-full bg-[#08050e]/95 border-r border-white/5 w-64 glass-strong">
-      <div className="p-6 border-b border-white/5 flex items-center justify-between">
-        <Link href="/" className="hover:opacity-90 transition-opacity">
-          <Logo />
-        </Link>
+    <aside className="flex h-full w-64 flex-col border-r border-border bg-surface">
+      <div className="flex h-14 items-center border-b border-border px-5">
+        <ScrambleZone>
+          <Link href="/" className="flex items-center">
+            <Logo />
+          </Link>
+        </ScrambleZone>
       </div>
 
-      <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto">
-        {links.map((link) => {
+      <nav className="flex-1 overflow-y-auto py-2">
+        {links.map((link, i) => {
           const Icon = link.icon;
           // Keep the parent link lit on nested routes (e.g. /dashboard/inheritance/<owner>).
           const isActive =
@@ -55,40 +58,37 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({ onClose }) => {
               key={link.href}
               href={link.href}
               onClick={onClose}
-              className={`flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 group border ${
+              aria-current={isActive ? "page" : undefined}
+              className={`group flex items-center gap-3 border-l-2 px-5 py-2.5 text-[13px] transition-colors ${
                 isActive
-                  ? "bg-white/[0.06] border-white/10 text-white shadow-lg shadow-black/20"
-                  : "border-transparent text-muted hover:text-white hover:bg-white/[0.02]"
+                  ? "border-accent bg-[rgba(233,229,220,0.04)] text-foreground"
+                  : "border-transparent text-muted hover:bg-[rgba(233,229,220,0.02)] hover:text-foreground"
               }`}
             >
-              <div className="flex items-center gap-3">
-                <Icon
-                  className={`size-4 transition-transform duration-200 group-hover:scale-110 ${
-                    isActive
-                      ? "text-[var(--accent)]"
-                      : "text-muted group-hover:text-white"
-                  }`}
-                />
-                <span>{link.label}</span>
-              </div>
+              <span className="index-mono w-5 shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
+              <Icon
+                className={`size-3.5 shrink-0 ${
+                  isActive ? "text-accent" : "text-faint group-hover:text-muted"
+                }`}
+              />
+              <ScrambleText text={link.label} speed={44} />
             </Link>
           );
         })}
       </nav>
 
-      <div className="p-5 border-t border-white/5 bg-[#0e0a1c]/20">
-        <div className="flex items-center justify-between text-[10px] text-muted mb-2">
-          <span>Vault Status</span>
-          <span className="font-mono">{will ? "Initialized" : "Empty"}</span>
+      <div className="border-t border-border px-5 py-4">
+        <div className="flex items-center justify-between label-mono">
+          <span>Vault status</span>
+          <span className="text-foreground">{will ? "initialized" : "empty"}</span>
         </div>
         {will && (
-          <div className="flex items-center gap-2">
-            <span className="relative flex size-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[var(--neon)] opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-[var(--neon)]"></span>
-            </span>
-            <span className="text-[11px] font-semibold text-[var(--neon)] capitalize">
-              {Object.keys(will.willStatus)[0]} Will
+          <div className="mt-2.5 flex items-center gap-2">
+            <span className="size-1.5 rounded-full bg-neon" />
+            <span className="font-mono text-[11px] capitalize text-neon">
+              {Object.keys(will.willStatus)[0]} will
             </span>
           </div>
         )}

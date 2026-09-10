@@ -61,9 +61,9 @@ export const MediaManager: FC<MediaManagerProps> = ({
   return (
     <div className="flex flex-col gap-6">
       {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-white/5 pb-4">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-border pb-4">
         <div>
-          <h3 className="text-base font-semibold text-white">
+          <h3 className="text-base font-semibold text-foreground">
             Sealed Media & Documents
           </h3>
           <p className="text-xs text-white/60 mt-1">
@@ -72,7 +72,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
             heirs can ever open them.
           </p>
         </div>
-        <div className="flex items-center gap-2 rounded-xl bg-white/[0.02] border border-white/5 px-3 py-2 shrink-0">
+        <div className="flex items-center gap-2 rounded-xl bg-white/[0.02] border border-border px-3 py-2 shrink-0">
           <span className="text-[10px] uppercase text-muted tracking-wider">Total Sealed</span>
           <span className="text-xs font-semibold text-[var(--accent)] font-mono">{media.length} Files</span>
         </div>
@@ -108,7 +108,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
           <div className="mx-auto mb-3 w-fit rounded-xl border border-amber-500/25 bg-amber-500/10 p-3 text-amber-300">
             <Lock className="size-6" />
           </div>
-          <p className="text-sm font-semibold text-white">
+          <p className="text-sm font-semibold text-foreground">
             Uploads are locked until your will can reach quorum
           </p>
           <p className="mx-auto mt-1.5 max-w-sm text-xs leading-relaxed text-white/65">
@@ -117,7 +117,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
           </p>
           <Link
             href="/dashboard/custodians"
-            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-xs font-semibold text-white transition hover:bg-[var(--accent)]/90"
+            className="mt-4 inline-flex h-9 items-center justify-center rounded-lg bg-[var(--accent)] px-4 text-xs font-semibold text-foreground transition hover:bg-[var(--accent)]/90"
           >
             Manage custodians
           </Link>
@@ -140,7 +140,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
           >
             {busy ? (
               <>
-                <span className="size-3.5 mr-2 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                <span className="size-3.5 mr-2 rounded-full border-2 border-border-strong border-t-white animate-spin" />
                 Sealing & Indexing…
               </>
             ) : (
@@ -160,7 +160,7 @@ export const MediaManager: FC<MediaManagerProps> = ({
       )}
 
       {/* Sealed Files List (At the Bottom) */}
-      <div className="min-w-0 pt-4 border-t border-white/5">
+      <div className="min-w-0 pt-4 border-t border-border">
         <SealedDocumentsList
           media={media}
           isActive={isActive}

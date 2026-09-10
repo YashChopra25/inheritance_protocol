@@ -2,6 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
+import { DotField } from "@/app/components/fx/DotField";
+import { ScrambleText } from "@/app/components/fx/ScrambleText";
+import { paintVaultWheel } from "@/app/components/fx/artwork";
 
 interface VaultVisualProps {
   ownerKey?: PublicKey | null;
@@ -14,6 +17,10 @@ interface VaultVisualProps {
   firstBeneficiary?: PublicKey | null;
 }
 
+/**
+ * The vault read-out: a dot-matrix wheel that scatters under the pointer over
+ * a hairline ledger of the will's live state.
+ */
 export function VaultVisual({
   ownerKey,
   status = "active",
@@ -28,21 +35,17 @@ export function VaultVisual({
 
   useEffect(() => {
     const timer = setTimeout(() => setNow(Date.now()), 0);
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
+    const interval = setInterval(() => setNow(Date.now()), 1000);
     return () => {
       clearTimeout(timer);
       clearInterval(interval);
     };
   }, []);
 
-  // Format owner key short string
   const displayOwner = ownerKey
     ? `${ownerKey.toBase58().slice(0, 4)}…${ownerKey.toBase58().slice(-4)}`
     : "7H4q…wQ2P";
 
-  // Calculations for countdown timer
   let timerText = "03d 14h 22m";
   let progressPct = 62;
   const isClaimable = status === "claimable";
@@ -74,125 +77,85 @@ export function VaultVisual({
     progressPct = 0;
   }
 
-  // Floating chips values
   const ipfsText = firstCid
-    ? `ipfs: ${firstCid.slice(0, 6)}…${firstCid.slice(-4)}`
-    : "ipfs: cid pinned";
+    ? `${firstCid.slice(0, 6)}…${firstCid.slice(-4)}`
+    : "cid pinned";
 
-  const isWillActive = status === "active";
+  const heirText = firstBeneficiary
+    ? `${firstBeneficiary.toBase58().slice(0, 4)}…${firstBeneficiary
+        .toBase58()
+        .slice(-4)}`
+    : "9xVu…kP1";
+
+  const barColor = isClaimable
+    ? "var(--danger)"
+    : progressPct < 20
+      ? "var(--warn)"
+      : "var(--neon)";
+
+  const rows: [string, string][] = [
+    ["Owner", displayOwner],
+    ["Sealed", `${mediaCount} documents`],
+    ["Beneficiaries", String(beneficiaryCount)],
+    ["First CID", ipfsText],
+    ["First heir", heirText],
+  ];
 
   return (
-    <div className="relative mx-auto aspect-square w-full max-w-[520px]">
-      {/* Outer halo */}
-      <div className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_50%_50%,rgba(108,70,255,0.45),transparent_60%)] blur-2xl" />
-
-      {/* Orbit ring */}
-      <div className="absolute inset-6 rounded-full border border-[var(--border)]">
-        <div className="absolute inset-0 animate-spin-slow">
-          <span className="absolute left-1/2 -top-1.5 size-3 -translate-x-1/2 rounded-full bg-[var(--neon)] shadow-[0_0_18px_#9efce0]" />
-          <span className="absolute -right-1.5 top-1/2 size-2.5 -translate-y-1/2 rounded-full bg-[var(--accent)] shadow-[0_0_18px_#b794ff]" />
+    <div className="border border-border">
+      <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
+        <span className="inline-flex items-center gap-2 label-mono">
           <span
-            className="absolute left-1/2 -bottom-1.5 size-2 -translate-x-1/2 rounded-full bg-white/80"
-            style={{ boxShadow: "0 0 14px rgba(255,255,255,0.7)" }}
+            className={`size-1.5 rounded-full ${
+              isClaimable ? "bg-danger" : "bg-neon"
+            }`}
+          />
+          Will {status}
+        </span>
+        <span className="index-mono">fig. 02</span>
+      </div>
+
+      <div className="flex items-center justify-center px-4 py-6 text-muted">
+        <div className="w-52">
+          <DotField
+            paint={paintVaultWheel}
+            aspect={1}
+            cell={4}
+            fill={0.6}
+            radius={90}
+            force={30}
+            className="block w-full cursor-crosshair"
+            ariaLabel="Vault wheel"
           />
         </div>
       </div>
 
-      {/* Inner ring */}
-      <div className="absolute inset-16 rounded-full border border-dashed border-[rgba(183,148,255,0.25)]" />
-
-      {/* Vault card */}
-      <div className="absolute inset-[18%] rounded-3xl glass-strong glow-ring animate-float-slow">
-        <div className="flex h-full flex-col p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span
-                className={`size-2 rounded-full ${
-                  isWillActive
-                    ? "bg-[var(--neon)] shadow-[0_0_10px_#9efce0]"
-                    : "bg-[var(--danger)] shadow-[0_0_10px_#ff6b9a]"
-                }`}
-              />
-              <span className="text-[10px] text-muted uppercase tracking-wider font-semibold">
-                Will {status}
-              </span>
-            </div>
-            <span className="font-mono text-[10px] text-muted">
-              {displayOwner}
-            </span>
+      <dl className="border-t border-border">
+        {rows.map(([k, v]) => (
+          <div
+            key={k}
+            className="flex items-center justify-between border-b border-border px-4 py-2.5"
+          >
+            <dt className="label-mono">{k}</dt>
+            <dd className="font-mono text-[12px] text-foreground">
+              <ScrambleText text={v} speed={34} />
+            </dd>
           </div>
+        ))}
+      </dl>
 
-          <div className="mt-6">
-            <div className="text-[10px] uppercase tracking-wider text-muted font-semibold">
-              Sealed on IPFS
-            </div>
-            <div className="mt-1 flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tabular-nums text-white">
-                {mediaCount}
-              </span>
-              <span className="text-xs text-muted">documents</span>
-            </div>
-          </div>
-
-          <div className="mt-auto space-y-2">
-            <div className="flex items-center justify-between text-[11px] text-muted font-medium">
-              <span>Inactivity timer</span>
-              <span className="font-mono text-foreground">{timerText}</span>
-            </div>
-            <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/5">
-              <div
-                className="relative h-full rounded-full transition-all duration-1000 ease-out"
-                style={{
-                  width: `${progressPct}%`,
-                  background: isClaimable
-                    ? "var(--danger)"
-                    : progressPct < 20
-                    ? "linear-gradient(90deg, var(--warn), var(--danger))"
-                    : "linear-gradient(90deg, var(--neon), var(--accent) 60%, var(--accent-2))",
-                }}
-              >
-                <div className="absolute inset-0 animate-shimmer rounded-full" />
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-[11px] text-muted font-medium">
-              <span>Beneficiaries</span>
-              <span className="text-foreground">{beneficiaryCount}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Ping pulse */}
-      <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-        <div className="relative size-3">
-          <span className="absolute inset-0 rounded-full bg-[var(--accent)]" />
-          <span className="absolute inset-0 rounded-full bg-[var(--accent)] animate-pulse-ring" />
-        </div>
-      </div>
-
-      {/* Floating chips */}
-      <div className="absolute -left-2 sm:-left-6 top-12 rounded-xl glass px-3 py-2 text-xs animate-float-slow [animation-delay:-2s]">
-        <div className="flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-[var(--neon)]" />
-          <span className="font-mono text-muted text-[10px]">{ipfsText}</span>
-          <span className="text-foreground text-[10px] font-semibold">
-            {firstCid ? "active" : "pinned"}
+      <div className="px-4 py-4">
+        <div className="flex items-center justify-between label-mono">
+          <span>Inactivity timer</span>
+          <span className="font-mono text-[12px] tabular-nums text-foreground">
+            {timerText}
           </span>
         </div>
-      </div>
-      <div className="absolute -right-2 sm:-right-6 bottom-14 rounded-xl glass px-3 py-2 text-xs animate-float-slow [animation-delay:-4s]">
-        <div className="flex items-center gap-2">
-          <span className="size-1.5 rounded-full bg-[var(--accent)]" />
-          <span className="text-muted text-[10px]">
-            {firstBeneficiary ? "Heir:" : "Beneficiary"}
-          </span>
-          <span className="font-mono text-foreground text-[10px] font-semibold">
-            {firstBeneficiary
-              ? `${firstBeneficiary.toBase58().slice(0, 4)}…${firstBeneficiary
-                  .toBase58()
-                  .slice(-4)}`
-              : "9xVu…kP1"}
-          </span>
+        <div className="mt-2.5 h-1.5 w-full bg-[rgba(233,229,220,0.07)]">
+          <div
+            className="h-full transition-[width] duration-1000 ease-out"
+            style={{ width: `${progressPct}%`, background: barColor }}
+          />
         </div>
       </div>
     </div>

@@ -17,7 +17,7 @@ export const UserTokenList: FC<UserTokenListProps> = ({
 }) => {
   if (userTokens.length === 0) {
     return (
-      <div className="rounded-xl border border-white/5 bg-black/5 p-4 text-center">
+      <div className="rounded-xl border border-border bg-black/5 p-4 text-center">
         <Coins className="size-6 text-muted mx-auto opacity-30 mb-1" />
         <p className="text-[10px] text-muted">No non-zero SPL tokens found in your wallet.</p>
       </div>
@@ -38,13 +38,13 @@ export const UserTokenList: FC<UserTokenListProps> = ({
               onClick={() => onSelect(t.mint)}
               className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
                 isSelected
-                  ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-white"
-                  : "bg-black/15 border-white/5 hover:border-white/10 text-muted hover:text-white"
+                  ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-foreground"
+                  : "bg-black/15 border-border hover:border-border-strong text-muted hover:text-foreground"
               }`}
             >
               <div className="flex items-center gap-2.5">
                 <div className={`size-8 rounded-lg flex items-center justify-center font-bold text-xs transition-colors ${
-                  isSelected ? "bg-[var(--accent)]/20 text-white" : "bg-[#0e0a1c] text-[var(--accent)] group-hover:bg-[#1a1433]"
+                  isSelected ? "bg-[var(--accent)]/20 text-foreground" : "bg-surface text-[var(--accent)] group-hover:bg-surface-2"
                 }`}>
                   {t.symbol.substring(0, 3)}
                 </div>
@@ -58,15 +58,15 @@ export const UserTokenList: FC<UserTokenListProps> = ({
 
               <div className="flex items-center gap-2.5">
                 <div className="text-right">
-                  <div className="text-xs font-mono font-semibold text-white">
+                  <div className="text-xs font-mono font-semibold text-foreground">
                     {parseFloat(t.balance).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 })}
                   </div>
                   <span className="text-[8px] opacity-50 block">Balance</span>
                 </div>
                 <div className={`size-5 rounded-full border flex items-center justify-center transition-all ${
                   isSelected 
-                    ? "bg-[var(--accent)] border-[var(--accent)] text-white"
-                    : "border-white/10 group-hover:border-white/20 text-transparent"
+                    ? "bg-[var(--accent)] border-[var(--accent)] text-foreground"
+                    : "border-border group-hover:border-border-strong text-transparent"
                 }`}>
                   <Check className="size-3" />
                 </div>

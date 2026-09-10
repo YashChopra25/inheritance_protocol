@@ -50,14 +50,14 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
 
   return (
     <div className="mt-2 space-y-4">
-      <div className="flex items-center justify-between gap-4 border-b border-white/5 pb-2">
-        <h4 className="text-xs font-semibold text-white uppercase tracking-wider">
+      <div className="flex items-center justify-between gap-4 border-b border-border pb-2">
+        <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">
           Your Sealed Documents ({filteredMedia.length})
         </h4>
         {hasFilters && (
           <button
             onClick={clearFilters}
-            className="text-[10px] text-accent hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+            className="text-[10px] text-accent hover:text-foreground flex items-center gap-1 transition-colors cursor-pointer"
           >
             <RefreshCw className="size-3" /> Clear filters
           </button>
@@ -72,16 +72,16 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
       />
 
       {filteredMedia.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-10 px-4 rounded-xl border border-white/5 bg-black/10">
+        <div className="flex flex-col items-center justify-center py-10 px-4 rounded-xl border border-border bg-black/10">
           <p className="text-xs text-muted">
             {media.length === 0 ? "No documents sealed yet. Add items above." : "No documents match filters."}
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto max-h-[350px] w-full border border-white/5 bg-black/20 rounded-xl scrollbar-none">
+        <div className="overflow-x-auto max-h-[350px] w-full border border-border bg-black/20 rounded-xl scrollbar-none">
           <table className="w-full text-left border-collapse min-w-[640px]">
             <thead>
-              <tr className="border-b border-white/5 bg-white/[0.01]">
+              <tr className="border-b border-border bg-white/[0.01]">
                 <th className="w-16 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60 hidden md:table-cell text-center">
                   Index
                 </th>
@@ -93,7 +93,7 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
                 </th>
                 <th
                   onClick={toggleSort}
-                  className="w-32 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-white hidden sm:table-cell cursor-pointer select-none transition-colors"
+                  className="w-32 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-foreground hidden sm:table-cell cursor-pointer select-none transition-colors"
                 >
                   <div className="flex items-center gap-1.5">
                     <span>Sealed Date</span>

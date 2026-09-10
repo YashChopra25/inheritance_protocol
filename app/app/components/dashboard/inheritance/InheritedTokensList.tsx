@@ -31,16 +31,16 @@ export const InheritedTokensList: FC<InheritedTokensListProps> = ({
   }
 
   return (
-    <div className="rounded-xl border border-white/5 bg-black/10 p-4">
+    <div className="rounded-xl border border-border bg-black/10 p-4">
       <div className="mb-2.5 flex items-center justify-between">
-        <h4 className="text-xs font-semibold uppercase tracking-wider text-white">
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
           Inherited tokens ({tokens.length})
         </h4>
         <button
           onClick={refresh}
           disabled={loading}
           title="Refresh balances"
-          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/5 hover:text-white"
+          className="rounded-lg p-1.5 text-muted transition-colors hover:bg-white/5 hover:text-foreground"
         >
           <RefreshCw className={`size-3.5 ${loading ? "animate-spin" : ""}`} />
         </button>

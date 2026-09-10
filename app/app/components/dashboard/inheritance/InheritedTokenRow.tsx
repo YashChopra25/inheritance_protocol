@@ -29,12 +29,12 @@ export const InheritedTokenRow: FC<InheritedTokenRowProps> = ({
   const nothingToClaim = Number(token.myShare) <= 0;
 
   return (
-    <li className="flex flex-col gap-2 rounded-lg border border-white/5 bg-black/20 px-3.5 py-3 text-xs">
+    <li className="flex flex-col gap-2 rounded-lg border border-border bg-black/20 px-3.5 py-3 text-xs">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <Coins className="size-4 shrink-0 text-accent" />
           <div className="min-w-0">
-            <span className="font-semibold text-white">{token.symbol}</span>{" "}
+            <span className="font-semibold text-foreground">{token.symbol}</span>{" "}
             <span className="text-[10px] text-muted">{token.name}</span>
             <span className="block text-[10px] text-muted font-mono">
               Mint: {short(token.tokenMint)}

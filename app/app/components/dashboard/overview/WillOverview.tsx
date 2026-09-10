@@ -19,13 +19,13 @@ const Stat: FC<{
   value: string;
   highlight?: "active" | "safe" | "warn" | "danger";
 }> = ({ label, value, highlight }) => {
-  let textCls = "text-white";
+  let textCls = "text-foreground";
   if (highlight === "active" || highlight === "safe") textCls = "text-[var(--neon)]";
   else if (highlight === "warn") textCls = "text-[var(--warn)]";
   else if (highlight === "danger") textCls = "text-[var(--danger)]";
 
   return (
-    <div className="rounded-lg border border-white/5 bg-black/20 px-3.5 py-2.5 transition-all hover:bg-black/30">
+    <div className="rounded-lg border border-border bg-black/20 px-3.5 py-2.5 transition-all hover:bg-black/30">
       <div className="text-[10px] uppercase tracking-wider text-muted">
         {label}
       </div>
@@ -59,9 +59,9 @@ export const WillOverview: FC<WillOverviewProps> = ({ data }) => {
         </div>
       )}
 
-      <div className="rounded-xl border border-white/10 bg-white/2 p-5">
+      <div className="rounded-xl border border-border bg-white/2 p-5">
         <div className="flex items-center justify-between gap-3 mb-4">
-          <h2 className="text-base font-semibold text-white">
+          <h2 className="text-base font-semibold text-foreground">
             My Will Overview
           </h2>
           <span className="text-xs font-mono text-muted">

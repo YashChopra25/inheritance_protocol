@@ -1,79 +1,98 @@
 import Link from "next/link";
-import { VaultVisual } from "./VaultVisual";
+import { DitherShader } from "@/app/components/fx/DitherShader";
+import { DotHeadline } from "@/app/components/fx/DotHeadline";
+import { ScrambleText, ScrambleZone } from "@/app/components/fx/ScrambleText";
+import { SquigglyText } from "@/app/components/fx/SquigglyText";
+
+const stats = [
+  { k: "Custody", v: "None" },
+  { k: "Storage", v: "IPFS + chain" },
+  { k: "Release", v: "M-of-N" },
+];
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden">
+    <section className="relative overflow-hidden border-b border-border">
       <div className="pointer-events-none absolute inset-0 subtle-grid" />
-      <div className="mx-auto max-w-7xl px-5 sm:px-8 pt-16 pb-24 sm:pt-24 sm:pb-32">
-        <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1fr] gap-14 items-center">
-          <div>
-            <span className="inline-flex items-center gap-2 rounded-full glass px-3 py-1 text-xs text-muted">
-              <span className="size-1.5 rounded-full bg-[var(--neon)] shadow-[0_0_10px_#9efce0]" />
-              Live on Solana devnet · Audit in progress
-            </span>
-            <h1 className="mt-5 text-[44px] sm:text-6xl lg:text-[68px] leading-[1.04] tracking-tight font-semibold">
-              <span className="gradient-text">Your digital will,</span>
-              <br />
-              <span className="gradient-text">enforced on-chain.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-[17px] leading-relaxed text-muted">
-              Seal documents, keys, and final messages on IPFS, name your heirs,
-              and appoint trusted custodians. When you go silent and your
-              custodians confirm it, your beneficiaries inherit access — no
-              lawyers, no executor, no custody of your files.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center gap-3">
-              <Link
-                href="/dashboard"
-                className="inline-flex h-12 items-center rounded-xl px-5 text-sm font-medium btn-primary"
-              >
-                Create Your Will
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 16 16"
-                  className="ml-2"
-                  fill="none"
-                >
-                  <path
-                    d="M3 8h10m0 0-3.5-3.5M13 8l-3.5 3.5"
-                    stroke="currentColor"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-              </Link>
-              <Link
-                href="#demo"
-                className="inline-flex h-12 items-center rounded-xl px-5 text-sm font-medium btn-ghost"
-              >
-                Try Demo
-              </Link>
-            </div>
 
-            <dl className="mt-12 grid grid-cols-3 gap-4 max-w-xl">
-              {[
-                { k: "Non-custodial", v: "100%" },
-                { k: "Storage", v: "IPFS + on-chain" },
-                { k: "Release", v: "M-of-N custodians" },
-              ].map((s) => (
-                <div key={s.k} className="rounded-xl glass px-4 py-3.5">
-                  <dt className="text-[11px] uppercase tracking-wider text-muted">
-                    {s.k}
-                  </dt>
-                  <dd className="mt-1 text-base font-medium text-foreground">
-                    {s.v}
-                  </dd>
-                </div>
-              ))}
-            </dl>
+      <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_0.9fr]">
+        <div className="px-5 sm:px-8 pt-16 pb-14 lg:py-24">
+          <div className="flex items-center gap-2 label-mono">
+            <span className="size-1.5 rounded-full bg-neon" />
+            <ScrambleText
+              text="Solana devnet · audit in progress"
+              trigger="view"
+              speed={54}
+            />
           </div>
 
-          <div className="relative">
-            <VaultVisual />
+          {/* The headline is a dot field: run a cursor through it and the
+              letters blow apart, then fall back into place. */}
+          <DotHeadline
+            lines={["Silence is", "the trigger."]}
+            className="mt-6 max-w-[620px]"
+            cell={5}
+          />
+
+          <SquigglyText
+            as="p"
+            rest={0.5}
+            peak={4}
+            className="mt-8 max-w-lg text-[15px] leading-relaxed text-muted"
+          >
+            <ScrambleText
+              text="Seal your documents, keys and final messages on IPFS. Name your heirs, appoint custodians. Go quiet for long enough, and the program hands over exactly what you sealed — to exactly who you named."
+              speed={130}
+            />
+          </SquigglyText>
+
+          <div className="mt-9 flex flex-wrap items-center gap-3">
+            <Link
+              href="/dashboard"
+              className="inline-flex h-11 items-center px-5 text-sm btn-primary"
+            >
+              <ScrambleText text="Create your will" speed={50} noiseClassName="opacity-50" />
+              <span className="ml-2">↗</span>
+            </Link>
+            <Link
+              href="#demo"
+              className="inline-flex h-11 items-center px-5 text-sm btn-ghost"
+            >
+              <ScrambleText text="Run the simulation" speed={50} />
+            </Link>
           </div>
+
+          <dl className="mt-14 grid max-w-lg grid-cols-3 border-t border-border">
+            {stats.map((s) => (
+              <ScrambleZone
+                key={s.k}
+                as="div"
+                className="border-r border-border py-4 pr-4 last:border-r-0"
+              >
+                <dt className="label-mono">
+                  <ScrambleText text={s.k} trigger="zone" speed={30} />
+                </dt>
+                <dd className="mt-2 font-mono text-sm text-foreground">
+                  <ScrambleText text={s.v} trigger="zone" speed={30} />
+                </dd>
+              </ScrambleZone>
+            ))}
+          </dl>
+        </div>
+
+        {/* Bayer-dithered monument. The pointer detonates the dot field; it
+            reassembles the moment the cursor leaves. */}
+        <div className="relative min-h-[340px] border-t border-border lg:min-h-0 lg:border-l lg:border-t-0">
+          <div className="absolute inset-0">
+            <DitherShader
+              className="block h-full w-full cursor-crosshair"
+              pixel={4}
+              ariaLabel="A dithered monument that scatters under the cursor"
+            />
+          </div>
+          <span className="pointer-events-none absolute bottom-4 right-5 label-mono">
+            fig. 01 — the vault
+          </span>
         </div>
       </div>
     </section>

@@ -53,7 +53,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
         {will && (
           <>
             <WillOverview data={data!} />
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 glass-strong">
+            <div className="rounded-2xl border border-border bg-white/[0.02] p-5 glass-strong">
               <MediaManager
                 will={will}
                 refresh={refresh}
@@ -63,7 +63,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
                 beneficiaries={data?.beneficiaries ?? []}
               />
             </div>
-            <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 glass-strong">
+            <div className="rounded-2xl border border-border bg-white/[0.02] p-5 glass-strong">
               <CustodianManager
                 refresh={refresh}
                 custodians={data?.custodians ?? []}
@@ -76,8 +76,8 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
           </>
         )}
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5 glass-strong flex flex-col gap-6">
-          <div className="flex border-b border-white/5 overflow-x-auto scrollbar-none pb-2 gap-1">
+        <div className="rounded-2xl border border-border bg-white/[0.02] p-5 glass-strong flex flex-col gap-6">
+          <div className="flex border-b border-border overflow-x-auto scrollbar-none pb-2 gap-1">
             <TabButton active={activeTab === "beneficiaries"} onClick={() => setActiveTab("beneficiaries")} label="🤝 Beneficiaries" />
             <TabButton active={activeTab === "settings"} onClick={() => setActiveTab("settings")} label="⚙️ Settings" />
             <TabButton active={activeTab === "intervene"} onClick={() => setActiveTab("intervene")} label="🔑 Intervene / Claim" />
@@ -96,7 +96,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
               will ? (
                 <div className="flex flex-col gap-8">
                   <div>
-                    <h3 className="text-base font-semibold text-white">Will Configurations</h3>
+                    <h3 className="text-base font-semibold text-foreground">Will Configurations</h3>
                     <p className="mt-1 text-xs text-muted leading-relaxed">Adjust limits and signatures.</p>
                   </div>
                   <UpdateWillForm refresh={refresh} isActive={statusOf(will.willStatus) === "active"} />
@@ -122,7 +122,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
 
       {/* Right Column: Visualizer & Info */}
       <div className="flex flex-col gap-6 lg:sticky lg:top-24">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
+        <div className="rounded-2xl border border-border bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] self-start mb-2 pl-1">Active Vault Visualizer</h3>
           <div className="w-full scale-95 sm:scale-100 origin-center">
             <VaultVisual
@@ -141,7 +141,7 @@ export const ConnectedView: FC<ConnectedViewProps> = ({
         <LifecycleFlow />
         <ContextFlowDiagram />
 
-        <div className="rounded-2xl border border-white/10 bg-white/[0.01] p-5 glass">
+        <div className="rounded-2xl border border-border bg-white/[0.01] p-5 glass">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--warn)]">Trustless Architecture</h3>
           <p className="mt-2.5 text-xs text-muted leading-relaxed">No third party can modify your will settings or preview files.</p>
         </div>

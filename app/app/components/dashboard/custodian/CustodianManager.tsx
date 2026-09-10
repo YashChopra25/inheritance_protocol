@@ -72,13 +72,13 @@ export const CustodianManager: FC<CustodianManagerProps> = ({
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h3 className="text-base font-semibold text-white">Custodians</h3>
+          <h3 className="text-base font-semibold text-foreground">Custodians</h3>
           <p className="mt-0.5 text-xs text-muted">
             The only people who can confirm your passing. They can never read
             your documents or move your tokens.
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-2 rounded-xl border border-white/5 bg-white/[0.02] px-3 py-2">
+        <div className="flex shrink-0 items-center gap-2 rounded-xl border border-border bg-white/[0.02] px-3 py-2">
           <ShieldCheck className="size-3.5 text-[var(--accent)]" />
           <span className="font-mono text-xs font-semibold text-[var(--accent)]">
             {custodians.length}{" "}
@@ -95,7 +95,7 @@ export const CustodianManager: FC<CustodianManagerProps> = ({
           approvalsReceived={approvalsReceived}
         />
 
-        <div className="flex h-full flex-col rounded-2xl border border-white/10 bg-white/[0.02] p-5">
+        <div className="flex h-full flex-col rounded-2xl border border-border bg-white/[0.02] p-5">
           <div className="flex items-center gap-2">
             <UserPlus className="size-3.5 text-muted" />
             <p className="text-[10px] uppercase tracking-wider text-muted">
@@ -146,8 +146,8 @@ export const CustodianManager: FC<CustodianManagerProps> = ({
       </div>
 
       {/* The list is the main event: full width, directly reachable. */}
-      <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-5">
-        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-white">
+      <div className="rounded-2xl border border-border bg-white/[0.02] p-5">
+        <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-foreground">
           Custodian list ({custodians.length})
         </h4>
         <KeyList

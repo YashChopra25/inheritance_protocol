@@ -1,4 +1,5 @@
 import { FC, useState } from "react";
+import { ScrambleText } from "@/app/components/fx/ScrambleText";
 
 interface SimulateDeathToggleProps {
   active: boolean;
@@ -24,30 +25,32 @@ export const SimulateDeathToggle: FC<SimulateDeathToggleProps> = ({
     onTrigger();
   };
 
+  const label = active
+    ? "Custodians confirmed"
+    : confirming
+      ? "Tap again to confirm"
+      : "Simulate death";
+
   return (
     <button
       type="button"
       onClick={handleClick}
       disabled={disabled || active}
-      className={`group inline-flex h-9 items-center gap-2 rounded-lg border px-3 text-xs transition-colors ${
+      className={`inline-flex h-9 items-center gap-2 border px-3 font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
         active
-          ? "border-[rgba(255,107,154,0.4)] bg-[rgba(255,107,154,0.1)] text-[var(--danger)]"
+          ? "border-danger/50 text-danger"
           : confirming
-          ? "border-[rgba(255,184,107,0.4)] bg-[rgba(255,184,107,0.08)] text-[var(--warn)]"
-          : "border-[var(--border-strong)] text-muted hover:text-foreground hover:border-[rgba(255,107,154,0.4)]"
+            ? "border-warn/50 text-warn"
+            : "border-border-strong text-muted hover:border-danger/60 hover:text-danger"
       } disabled:cursor-not-allowed disabled:opacity-50`}
       aria-pressed={active}
     >
       <span
-        className={`size-2 rounded-full ${
-          active ? "bg-[var(--danger)]" : "bg-white/30"
-        }`}
+        className={`size-1.5 rounded-full ${active ? "bg-danger" : "bg-faint"}`}
       />
-      {active
-        ? "Custodians confirmed"
-        : confirming
-        ? "Tap again to confirm"
-        : "Simulate Death"}
+      {/* Re-keyed so a label change restarts the shred rather than resuming a
+          run against the previous string. */}
+      <ScrambleText key={label} text={label} trigger="mount" speed={40} />
     </button>
   );
 };

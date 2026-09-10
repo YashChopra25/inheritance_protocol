@@ -12,8 +12,8 @@ export const TabButton: FC<TabButtonProps> = ({ active, onClick, label }) => {
       onClick={onClick}
       className={`px-4 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 border whitespace-nowrap ${
         active
-          ? "bg-white/[0.06] border-white/15 text-white shadow-lg shadow-black/20"
-          : "border-transparent text-muted hover:text-white hover:bg-white/[0.02]"
+          ? "bg-white/[0.06] border-border-strong text-foreground shadow-lg shadow-black/20"
+          : "border-transparent text-muted hover:text-foreground hover:bg-white/[0.02]"
       }`}
     >
       {label}
@@ -27,8 +27,8 @@ interface PlaceholderTabProps {
 
 export const PlaceholderTab: FC<PlaceholderTabProps> = ({ setActiveTab }) => {
   return (
-    <div className="flex flex-col items-center justify-center text-center py-12 px-4 rounded-xl border border-white/5 bg-black/10">
-      <div className="p-3 rounded-full bg-white/[0.02] border border-white/5 mb-3 text-muted">
+    <div className="flex flex-col items-center justify-center text-center py-12 px-4 rounded-xl border border-border bg-black/10">
+      <div className="p-3 rounded-full bg-white/[0.02] border border-border mb-3 text-muted">
         <svg
           className="size-8"
           fill="none"
@@ -43,14 +43,14 @@ export const PlaceholderTab: FC<PlaceholderTabProps> = ({ setActiveTab }) => {
           />
         </svg>
       </div>
-      <h4 className="text-sm font-semibold text-white">No Active Will Found</h4>
+      <h4 className="text-sm font-semibold text-foreground">No Active Will Found</h4>
       <p className="mt-1 max-w-sm text-xs text-muted leading-relaxed">
         You need to initialize your digital will before you can manage sealed
         media, custodians, or beneficiaries.
       </p>
       <button
         onClick={() => setActiveTab("settings")}
-        className="mt-4 inline-flex h-9 items-center justify-center rounded-lg px-4 text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white transition-colors"
+        className="mt-4 inline-flex h-9 items-center justify-center rounded-lg px-4 text-xs font-semibold bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-foreground transition-colors"
       >
         Go to Settings & Create
       </button>

@@ -10,9 +10,9 @@ export const UploadProgressCard: FC<UploadProgressCardProps> = ({ progress }) =>
   return (
     <div className="mt-2 p-3.5 rounded-xl border border-[var(--accent)]/20 bg-[var(--accent)]/5 flex flex-col gap-2.5 transition-all duration-300">
       <div className="flex items-start gap-3.5">
-        <div className="size-4 rounded-full border-2 border-white/15 border-t-[var(--accent)] animate-spin mt-0.5 shrink-0" />
+        <div className="size-4 rounded-full border-2 border-border-strong border-t-[var(--accent)] animate-spin mt-0.5 shrink-0" />
         <div className="flex-1 min-w-0">
-          <div className="text-xs font-semibold text-white flex items-center justify-between">
+          <div className="text-xs font-semibold text-foreground flex items-center justify-between">
             <span>Sealing document...</span>
             <span className="font-mono text-accent">{progress}%</span>
           </div>

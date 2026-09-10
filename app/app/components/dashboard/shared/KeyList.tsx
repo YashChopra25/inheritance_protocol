@@ -44,7 +44,7 @@ const BADGE_CLS: Record<BadgeStyle, string> = {
   danger: "bg-red-500/15 text-red-400 border-red-500/25",
   accent:
     "bg-[var(--accent)]/15 text-[var(--accent)] border-[var(--accent)]/25",
-  neutral: "bg-white/10 text-white/85 border-white/15",
+  neutral: "bg-white/10 text-white/85 border-border-strong",
 };
 
 const CopyButton: FC<{ value: string }> = ({ value }) => {
@@ -64,7 +64,7 @@ const CopyButton: FC<{ value: string }> = ({ value }) => {
           // is on the row's tooltip either way, so there is nothing to report.
         }
       }}
-      className="rounded p-1 text-muted transition-colors hover:bg-white/5 hover:text-white"
+      className="rounded p-1 text-muted transition-colors hover:bg-white/5 hover:text-foreground"
     >
       {copied ? (
         <Check className="size-3 text-[var(--neon)]" />
@@ -93,7 +93,7 @@ export const KeyList: FC<KeyListProps> = ({
         return (
           <li
             key={it.key}
-            className="flex flex-col gap-2 rounded-lg border border-white/5 bg-black/20 px-3.5 py-2.5 text-xs transition-colors hover:bg-black/30 sm:flex-row sm:items-center sm:justify-between"
+            className="flex flex-col gap-2 rounded-lg border border-border bg-black/20 px-3.5 py-2.5 text-xs transition-colors hover:bg-black/30 sm:flex-row sm:items-center sm:justify-between"
           >
             <div className="flex min-w-0 flex-col gap-1">
               <div className="flex flex-wrap items-center gap-2">
