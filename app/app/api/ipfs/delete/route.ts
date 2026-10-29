@@ -4,49 +4,51 @@ import {
   invalidCidResponse,
   isValidCid,
   rateLimit,
+  readJson,
   requireSession,
   serverError,
   WRITE_LIMIT,
 } from "@/lib/server/guard";
-import { fileIdForCid, getPinata } from "@/lib/server/pinata";
+import { getPinata } from "@/lib/server/pinata";
 
 export const runtime = "nodejs";
 
 /**
- * Unpin a document. Owner-only.
+ * Unpin a document. Uploader-only.
  *
- * This route was the sharpest edge of C4: it accepted a bare CID from anyone and
- * deleted the corresponding file. Since every CID is published on-chain, that
- * made every user's inheritance documents destroyable by any passer-by.
+ * Authorization binds to the wallet that pinned the file, not to whoever's will
+ * references the CID — references can be forged by anyone, since every CID is
+ * public (see `authz.ts`). Binding to the uploader is also what lets the owner
+ * clean up after the on-chain reference is already gone, or was never written
+ * because the transaction failed.
  *
- * The client-supplied `fileId` shortcut is also gone — accepting it let a caller
- * name a file the CID check never covered. The id is now always resolved from
- * the authorized CID, server-side.
+ * Only the caller's own pin records are removed; a byte-identical pin made by
+ * someone else is left alone.
  */
 export async function POST(request: Request) {
   try {
     const auth = await requireSession();
     if (!auth.ok) return auth.response;
 
-    const limited = rateLimit(`delete:${auth.wallet}`, WRITE_LIMIT);
+    const limited = await rateLimit(`delete:${auth.wallet}`, WRITE_LIMIT);
     if (limited) return limited;
 
-    const { cid } = (await request.json()) ?? {};
+    const json = await readJson(request);
+    if (!json.ok) return json.response;
+    const { cid } = json.body;
     if (!isValidCid(cid)) return invalidCidResponse();
 
-    const decision = await authorizeCid(auth.wallet, cid, "write");
+    const pinata = getPinata();
+    const decision = await authorizeCid(pinata, auth.wallet, cid, "write");
+    if (decision.notPinned) {
+      // Already gone: report success so a retried teardown is idempotent.
+      return NextResponse.json({ success: true, alreadyRemoved: true });
+    }
     if (!decision.allowed) {
       return NextResponse.json({ error: decision.reason }, { status: 403 });
     }
 
-    const pinata = getPinata();
-    const fileId = await fileIdForCid(pinata, cid);
-    if (!fileId) {
-      // Already gone: report success so a retried teardown is idempotent.
-      return NextResponse.json({ success: true, alreadyRemoved: true });
-    }
-
-    await pinata.files.private.delete([fileId]);
+    await pinata.files.private.delete(decision.pins.map((p) => p.id));
     return NextResponse.json({ success: true });
   } catch (err) {
     return serverError("ipfs/delete", err);

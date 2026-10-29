@@ -8,6 +8,8 @@ import type { WillBundle } from "@/hooks/useWill";
 
 interface WillOverviewProps {
   data: WillBundle;
+  /** Re-read the will — called after a check-in lands. */
+  refresh: () => void;
 }
 
 function statusOf(status: object): string {
@@ -36,7 +38,7 @@ const Stat: FC<{
   );
 };
 
-export const WillOverview: FC<WillOverviewProps> = ({ data }) => {
+export const WillOverview: FC<WillOverviewProps> = ({ data, refresh }) => {
   const vault = useVault();
   const will = data?.will ?? null;
 
@@ -88,12 +90,11 @@ export const WillOverview: FC<WillOverviewProps> = ({ data }) => {
           <CountdownTracker
             lastInactivity={will.lastActiveAt.toNumber()}
             threshold={will.inactivityThreshold.toNumber()}
-            onCheckIn={() =>
-              vault.updateWill(
-                will.inactivityThreshold.toNumber(),
-                will.minApprovals
-              )
-            }
+            // A pure liveness ping: `update_will(None, None)` only refreshes
+            // `last_active_at`. Re-sending the cached threshold/approvals
+            // could silently undo a change made from another tab or device.
+            onCheckIn={() => vault.updateWill(null, null)}
+            onCheckedIn={refresh}
           />
         )}
       </div>

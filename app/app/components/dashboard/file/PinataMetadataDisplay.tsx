@@ -1,22 +1,29 @@
 "use client";
 
 import { FC } from "react";
+import { FileText } from "lucide-react";
 import { usePinataMetadata } from "@/hooks/usePinataMetadata";
+import { formatBytes } from "@/lib/utils";
+import { SignInPrompt } from "./SignInPrompt";
 
 interface PinataMetadataDisplayProps {
   cid: string;
 }
 
-function formatBytes(bytes: number) {
-  if (bytes === 0) return "0 Bytes";
-  const k = 1024;
-  const sizes = ["Bytes", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
-}
-
+/**
+ * Pin facts for one document: label, sealed size and pin date. The real name
+ * and type only appear after decrypting, in the preview.
+ */
 export const PinataMetadataDisplay: FC<PinataMetadataDisplayProps> = ({ cid }) => {
-  const { data, isLoading, error } = usePinataMetadata(cid);
+  const { data, isLoading, error, needsSignIn } = usePinataMetadata(cid);
+
+  if (needsSignIn) {
+    return (
+      <div className="mt-2.5">
+        <SignInPrompt what="document details" />
+      </div>
+    );
+  }
 
   if (isLoading) {
     return (
@@ -34,68 +41,40 @@ export const PinataMetadataDisplay: FC<PinataMetadataDisplayProps> = ({ cid }) =
     return (
       <div className="mt-2.5 px-3 py-2 rounded-xl border border-border bg-white/[0.005] flex items-center gap-2 text-[10px] text-muted">
         <span className="inline-flex size-1.5 rounded-full bg-white/20" />
-        <span>Metadata unavailable for this CID</span>
+        <span>{error instanceof Error ? error.message : "Metadata unavailable for this CID"}</span>
       </div>
     );
   }
 
-  const { name, size, mimeType, createdAt } = data;
-  const formattedSize = formatBytes(size);
-  const formattedDate = new Date(createdAt).toLocaleDateString(undefined, {
+  const formattedDate = new Date(data.createdAt).toLocaleDateString(undefined, {
     year: "numeric",
     month: "short",
     day: "numeric",
   });
 
   return (
-    <div className="mt-2.5 p-3.5 rounded-xl border border-border bg-white/[0.02] hover:bg-white/[0.03] transition-all duration-300 shadow-md flex flex-col gap-2">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex items-center gap-2 min-w-0">
-          <div className="p-1.5 rounded bg-accent/10 border border-accent/25 text-accent shrink-0">
-            <svg
-              className="size-3.5"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-              />
-            </svg>
-          </div>
-          <div className="min-w-0">
-            <div className="text-[11px] font-semibold text-white/90 truncate hover:text-foreground transition-colors">
-              {name || "Untitled File"}
-            </div>
-            <div className="text-[10px] text-muted mt-0.5 font-mono truncate">
-              {mimeType}
-            </div>
-          </div>
+    <div className="mt-2.5 p-3.5 rounded-xl border border-border bg-white/[0.02] hover:bg-white/[0.03] transition-all duration-300 shadow-md flex items-start justify-between gap-3">
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="p-1.5 rounded bg-accent/10 border border-accent/25 text-accent shrink-0">
+          <FileText className="size-3.5" aria-hidden />
         </div>
-        <div className="text-right shrink-0">
-          <span className="text-[10px] font-semibold text-accent font-mono block">
-            {formattedSize}
-          </span>
-          <span className="text-[9px] text-muted block mt-0.5 font-mono">
-            {formattedDate}
-          </span>
+        <div className="min-w-0">
+          <div className="text-[11px] font-semibold text-white/90 truncate">
+            Sealed document
+          </div>
+          <div className="text-[10px] text-muted mt-0.5">
+            Name and type are revealed when you open it
+          </div>
         </div>
       </div>
-      {data.keyvalues && Object.keys(data.keyvalues).length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mt-1 pt-1.5 border-t border-border">
-          {Object.entries(data.keyvalues).map(([k, v]) => (
-            <span
-              key={k}
-              className="px-1.5 py-0.5 rounded text-[8px] font-mono bg-white/5 border border-border text-white/70"
-            >
-              {k}: {v}
-            </span>
-          ))}
-        </div>
-      )}
+      <div className="text-right shrink-0">
+        <span className="text-[10px] font-semibold text-accent font-mono block">
+          {formatBytes(data.size)}
+        </span>
+        <span className="text-[9px] text-muted block mt-0.5 font-mono">
+          {formattedDate}
+        </span>
+      </div>
     </div>
   );
 };

@@ -5,7 +5,7 @@ import { useDashboard } from "@/hooks/useDashboard";
 import { CreateWillForm } from "@/app/components/dashboard/settings/CreateWillForm";
 import { UpdateWillForm } from "@/app/components/dashboard/settings/UpdateWillForm";
 import { CurrentWillSettings } from "@/app/components/dashboard/settings/CurrentWillSettings";
-import { TxButton } from "@/app/components/dashboard/shared/ui";
+import { DeleteWillCard } from "@/app/components/dashboard/settings/DeleteWillCard";
 
 const SettingsPage: FC = () => {
   const { data, refresh, vault, isActive, status } = useDashboard();
@@ -38,24 +38,12 @@ const SettingsPage: FC = () => {
       </div>
 
       <div className="border-t border-red-500/20 pt-6 mt-4">
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-5">
-          <h4 className="text-xs font-semibold text-red-400 uppercase tracking-wider">
-            Danger Zone
-          </h4>
-          <p className="mt-2 text-xs text-muted leading-relaxed">
-            This permanently deletes your digital will and all of its associated records from Solana.
-          </p>
-          <div className="mt-4">
-            <TxButton
-              tone="danger"
-              confirm="Are you sure?"
-              action={() => vault.deleteWill()}
-              onDone={refresh}
-            >
-              Deactivate & Delete Will
-            </TxButton>
-          </div>
-        </div>
+        <DeleteWillCard
+          will={will}
+          isActive={isActive}
+          onDelete={() => vault.deleteWill()}
+          refresh={refresh}
+        />
       </div>
     </div>
   );

@@ -2,14 +2,21 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { mediaPda, willPda } from "@/lib/anchor";
 import { useVault } from "./useVault";
 import { useVaultSession, useVaultIdentity } from "./useVaultSession";
-import { sealFile, type Recipient } from "@/lib/crypto";
+import { MAX_DOCUMENT_BYTES, sealFile } from "@/lib/crypto";
+import { fetchSealingContext } from "@/lib/willFetch";
+import { heirsWithoutKey, recipientsFor } from "@/lib/recipients";
+import {
+  unpinDocument,
+  uploadSealedContainer,
+} from "@/app/services/pinata.service";
 import type { ProgramItem } from "./useWill";
 import type { BeneficiaryAccount } from "./useVault";
 
 interface UseMediaUploadProps {
-  mediaIndex: number;
   refresh: () => void;
   isActive: boolean;
   /**
@@ -33,22 +40,16 @@ export interface UnreachableHeir {
   wallet: string;
 }
 
-function hasKey(bytes: number[] | Uint8Array | undefined): boolean {
-  if (!bytes) return false;
-  const arr = Uint8Array.from(bytes);
-  return arr.length === 32 && arr.some((b) => b !== 0);
-}
-
 export function useMediaUpload({
-  mediaIndex,
   refresh,
   isActive,
   canUpload,
   beneficiaries,
 }: UseMediaUploadProps) {
   const vault = useVault();
+  const { connection } = useConnection();
   const session = useVaultSession();
-  const { unlock } = useVaultIdentity();
+  const { unlockVerified } = useVaultIdentity();
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,16 +57,38 @@ export function useMediaUpload({
 
   /**
    * Heirs who cannot be sealed to yet. Surfaced so the owner finds out BEFORE
-   * uploading rather than after they are gone: a document sealed without an
-   * heir can never be shared with them retroactively.
+   * uploading rather than after they are gone. Documents sealed without them
+   * can be re-sealed later from the document list, once they register a key.
    */
-  const unreachableHeirs: UnreachableHeir[] = beneficiaries
-    .filter((b) => !hasKey(b.account.encryptionPubkey))
-    .map((b) => ({ wallet: b.account.wallet.toBase58() }));
+  async function unpinIfUnreferenced(cid: string, index: number) {
+    if (!vault.publicKey) return;
+    try {
+      const ref = mediaPda(willPda(vault.publicKey), index);
+      const info = await connection.getAccountInfo(ref, "confirmed");
+      if (!info) await unpinDocument(cid);
+    } catch {
+      // Leave the pin in place when unsure; an orphan costs storage, a wrongly
+      // deleted document costs the estate.
+    }
+  }
+
+  const unreachableHeirs: UnreachableHeir[] = heirsWithoutKey(
+    beneficiaries
+  ).map((wallet) => ({ wallet }));
 
   async function onUpload() {
     if (!selectedFile) {
       setError("Choose a file first");
+      return;
+    }
+    // Before reading the file into memory: the server would refuse it anyway,
+    // but only after the browser had encrypted and uploaded all of it.
+    if (selectedFile.size > MAX_DOCUMENT_BYTES) {
+      setError(
+        `"${selectedFile.name}" is too large. The limit is ${Math.floor(
+          MAX_DOCUMENT_BYTES / (1024 * 1024)
+        )} MB.`
+      );
       return;
     }
     // The program only accepts new media while the will is Active; catching it
@@ -101,22 +124,25 @@ export function useMediaUpload({
         await session.signIn();
       }
 
-      // 2. Derive this wallet's document key and build the recipient set: the
-      //    owner, plus every heir who has published a key.
+      // 2. Derive this wallet's document key (checked to be reproducible —
+      //    the owner's own copy is sealed to it) and build the recipient set:
+      //    the owner, plus every heir who has published a key. Heirs are read
+      //    fresh and strictly from the chain rather than from the dashboard's
+      //    cached list, which degrades to empty on a failed load and would
+      //    seal the document to nobody but the owner.
       toast.loading("Unlocking your document key…", { id: toastId });
-      const identity = await unlock();
-      const ownerWallet = vault.publicKey?.toBase58();
-      if (!ownerWallet) throw new Error("Connect a wallet first");
-
-      const recipients: Recipient[] = [
-        { wallet: ownerWallet, encryptionPublicKey: identity.publicKey },
-        ...beneficiaries
-          .filter((b) => hasKey(b.account.encryptionPubkey))
-          .map((b) => ({
-            wallet: b.account.wallet.toBase58(),
-            encryptionPublicKey: Uint8Array.from(b.account.encryptionPubkey),
-          })),
-      ];
+      const identity = await unlockVerified();
+      const ownerKey = vault.publicKey;
+      if (!ownerKey) throw new Error("Connect a wallet first");
+      const { heirs, nextMediaIndex } = await fetchSealingContext(
+        vault.program,
+        ownerKey
+      );
+      const recipients = recipientsFor(
+        ownerKey.toBase58(),
+        identity.publicKey,
+        heirs
+      );
 
       // 3. Encrypt in the browser (C5). Nothing readable leaves this point.
       toast.loading(`Encrypting "${selectedFile.name}"…`, { id: toastId });
@@ -124,54 +150,13 @@ export function useMediaUpload({
       const sealed = await sealFile(selectedFile, recipients);
       setUploadProgress(25);
 
-      const sealedFile = new File(
-        [sealed as BlobPart],
-        `${selectedFile.name}.vseal`,
-        { type: "application/octet-stream" }
-      );
-
       // 4. Upload the ciphertext.
-      const json = await new Promise<{ cid: string }>((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open("POST", "/api/ipfs/upload");
-        xhr.withCredentials = true;
-
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const percent = 25 + Math.round((event.loaded / event.total) * 30);
-            setUploadProgress(percent);
-            toast.loading(`Uploading encrypted document (${percent}%)…`, {
-              id: toastId,
-            });
-          }
-        };
-
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              resolve(JSON.parse(xhr.responseText));
-            } catch {
-              reject(new Error("Invalid response from upload server"));
-            }
-          } else {
-            try {
-              const errJson = JSON.parse(xhr.responseText);
-              reject(
-                new Error(
-                  errJson.error ?? `Upload failed with status ${xhr.status}`
-                )
-              );
-            } catch {
-              reject(new Error(`Upload failed with status ${xhr.status}`));
-            }
-          }
-        };
-
-        xhr.onerror = () => reject(new Error("Network error during upload"));
-
-        const fd = new FormData();
-        fd.append("file", sealedFile);
-        xhr.send(fd);
+      const { cid } = await uploadSealedContainer(sealed, (fraction) => {
+        const percent = 25 + Math.round(fraction * 30);
+        setUploadProgress(percent);
+        toast.loading(`Uploading encrypted document (${percent}%)…`, {
+          id: toastId,
+        });
       });
 
       // 5. Record the CID on-chain. The stored media type describes the
@@ -184,7 +169,17 @@ export function useMediaUpload({
         setUploadProgress((prev) => (prev < 90 ? prev + 5 : prev));
       }, 800);
       try {
-        await vault.addMedia(json.cid, "application/vseal", mediaIndex);
+        await vault.addMedia(cid, "application/vseal", nextMediaIndex);
+      } catch (txErr) {
+        // If nothing references the pin, remove it rather than leave an orphan
+        // billed to the account forever. Checked against the chain first: a
+        // confirmation TIMEOUT throws too, yet the transaction may have landed,
+        // and unpinning a referenced document would destroy it. Best effort —
+        // the transaction error is the one worth showing.
+        // The check waits out the blockhash lifetime, after which a transaction
+        // that has not landed never will.
+        setTimeout(() => void unpinIfUnreferenced(cid, nextMediaIndex), 90_000);
+        throw txErr;
       } finally {
         clearInterval(interval);
       }

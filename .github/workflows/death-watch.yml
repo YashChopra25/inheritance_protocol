@@ -1,0 +1,59 @@
+name: death-confirmation watch
+
+# Read-only operator alerting: posts any will that is mid death-confirmation or
+# inside its grace window to ALERT_WEBHOOK_URL (see app/scripts/death-watch.mjs).
+#
+# Runs on a GitHub-hosted runner, NOT the self-hosted deploy box: checking out
+# and `npm ci` there would swap code and node_modules under the live app. The
+# de-duplication state file is carried between runs through the Actions cache.
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: death-watch
+  cancel-in-progress: false
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Restore alert state
+        uses: actions/cache/restore@v4
+        with:
+          path: app/.death-watch-state.json
+          key: death-watch-${{ github.run_id }}
+          restore-keys: death-watch-
+
+      - name: Scan for death confirmations
+        env:
+          NEXT_PUBLIC_PROGRAM_ID: ${{ secrets.NEXT_PUBLIC_PROGRAM_ID }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+          NEXT_PUBLIC_RPC_ENDPOINT: ${{ secrets.NEXT_PUBLIC_RPC_ENDPOINT }}
+          ALERT_WEBHOOK_URL: ${{ secrets.ALERT_WEBHOOK_URL }}
+        run: npm run watch:deaths
+
+      - name: Save alert state
+        uses: actions/cache/save@v4
+        with:
+          path: app/.death-watch-state.json
+          key: death-watch-${{ github.run_id }}

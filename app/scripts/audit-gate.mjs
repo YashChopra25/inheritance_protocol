@@ -37,6 +37,39 @@ const ACCEPTED = [
     why: "Same reachability analysis as GHSA-w3rx-r6r6-pgpr — metro-only parser DoS, no fixed version published.",
     review: "2026-11-01",
   },
+  {
+    id: "GHSA-82x6-q7mm-w9cf",
+    package: "toml",
+    why:
+      "Reached only via @coral-xyz/anchor's `workspace` module, which parses the local Anchor.toml from disk for test " +
+      "harnesses. This app never imports `anchor.workspace` (grep lib/ hooks/ app/), so toml.parse never runs, and it " +
+      "would never see attacker-controlled input if it did. Anchor 0.32.1 pins toml@3 with no fixed release.",
+    review: "2027-01-31",
+  },
+  {
+    id: "GHSA-v5mp-jgw5-2x6j",
+    package: "toml",
+    why: "Same reachability analysis as GHSA-82x6-q7mm-w9cf: anchor.workspace is never imported by this app.",
+    review: "2027-01-31",
+  },
+  {
+    id: "GHSA-4qx8-w7c3-pj3p",
+    package: "toml",
+    why: "Same reachability analysis as GHSA-82x6-q7mm-w9cf: anchor.workspace is never imported by this app.",
+    review: "2027-01-31",
+  },
+  {
+    id: "GHSA-9j65-hcg3-gc64",
+    package: "toml",
+    why: "Same reachability analysis as GHSA-82x6-q7mm-w9cf: anchor.workspace is never imported by this app.",
+    review: "2027-01-31",
+  },
+  {
+    id: "GHSA-9qmh-m7c6-f92p",
+    package: "toml",
+    why: "Same reachability analysis as GHSA-82x6-q7mm-w9cf: anchor.workspace is never imported by this app.",
+    review: "2027-01-31",
+  },
 ];
 
 const BLOCKING = new Set(["high", "critical"]);

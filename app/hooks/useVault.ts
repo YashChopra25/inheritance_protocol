@@ -16,13 +16,18 @@ import {
   tokenVaultPda,
   tokenClaimPda,
   getAta,
-  TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+  NATIVE_MINT,
+  createAtaIdempotentIx,
+  syncNativeIx,
   resolveTokenProgram,
   cidToBytes,
   mediaTypeToBytes,
   BN,
 } from "@/lib/anchor";
+import { fetchMintInfo, mintRisks } from "@/lib/tokens";
+import { computeBudgetIxs, CU } from "@/lib/priorityFee";
 
 // Defined next to the fetcher in `lib/willFetch`, re-exported here because
 // most components reach for them alongside the actions on this hook.
@@ -54,6 +59,17 @@ export function useVault() {
   const publicKey = wallet?.publicKey ?? null;
   const connected = !!wallet;
 
+  /**
+   * Compute-unit limit + a priority fee priced from recent fees on the
+   * accounts the transaction writes. Prepended to every instruction below;
+   * never throws (it falls back to a default price).
+   */
+  const budget = useCallback(
+    (writable: PublicKey[], units: number) =>
+      computeBudgetIxs(connection, writable, units),
+    [connection]
+  );
+
   // ---------- Will lifecycle ----------
 
   const createWill = useCallback(
@@ -66,9 +82,10 @@ export function useVault() {
           will: willPda(publicKey),
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, willPda(publicKey)], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const updateWill = useCallback(
@@ -88,9 +105,10 @@ export function useVault() {
           owner: publicKey,
           will: willPda(publicKey),
         })
+        .preInstructions(await budget([publicKey, willPda(publicKey)], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const deleteWill = useCallback(async () => {
@@ -102,8 +120,9 @@ export function useVault() {
         will: willPda(publicKey),
         systemProgram: SystemProgram.programId,
       })
+      .preInstructions(await budget([publicKey, willPda(publicKey)], CU.SIMPLE))
       .rpc();
-  }, [program, publicKey]);
+  }, [program, publicKey, budget]);
 
   // ---------- Media references (IPFS CIDs) ----------
 
@@ -119,9 +138,10 @@ export function useVault() {
           mediaReference: mediaPda(will, mediaIndex),
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const removeMedia = useCallback(
@@ -135,9 +155,10 @@ export function useVault() {
           will,
           mediaReference: mediaPda(will, mediaIndex),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   // ---------- Custodians ----------
@@ -155,9 +176,10 @@ export function useVault() {
           walletKey: custodianWallet,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const removeCustodian = useCallback(
@@ -172,9 +194,10 @@ export function useVault() {
           custodian: custodianPda(will, custodianWallet),
           walletKey: custodianWallet,
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   /** Called by a custodian to confirm the owner's death. `ownerKey` is the will owner. */
@@ -189,9 +212,10 @@ export function useVault() {
           will,
           custodian: custodianPda(will, publicKey),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   // ---------- Beneficiaries ----------
@@ -209,9 +233,10 @@ export function useVault() {
           walletKey: beneficiaryWallet,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const removeBeneficiary = useCallback(
@@ -226,9 +251,10 @@ export function useVault() {
           beneficiary: beneficiaryPda(will, beneficiaryWallet),
           walletKey: beneficiaryWallet,
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   /** Called by a beneficiary once the will is Claimable. `ownerKey` is the will owner. */
@@ -243,9 +269,10 @@ export function useVault() {
           will,
           beneficiary: beneficiaryPda(will, publicKey),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   /**
@@ -258,8 +285,9 @@ export function useVault() {
     return program.methods
       .revokeDeathConfirmation()
       .accountsPartial({ owner: publicKey, will: willPda(publicKey) })
+      .preInstructions(await budget([publicKey, willPda(publicKey)], CU.SIMPLE))
       .rpc();
-  }, [program, publicKey]);
+  }, [program, publicKey, budget]);
 
   /**
    * C5 — beneficiary-only. Publishes the X25519 public key that the owner seals
@@ -280,18 +308,27 @@ export function useVault() {
           will,
           beneficiary: beneficiaryPda(will, publicKey),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
+  /**
+   * Escrow `amount` raw units of `tokenMint`. The token program is read from
+   * the mint itself (legacy or Token-2022) unless the caller passes one, and
+   * mints whose extensions would break the escrow are refused before anything
+   * is signed — the program itself does not check them yet.
+   */
   const addToken = useCallback(
-    async (
-      tokenMint: PublicKey,
-      amount: BN,
-      tokenProgram: PublicKey = TOKEN_PROGRAM_ID,
-    ) => {
+    async (tokenMint: PublicKey, amount: BN, tokenProgramOverride?: PublicKey) => {
       if (!publicKey) throw new Error("Connect a wallet first");
+      const mintInfo = await fetchMintInfo(connection, tokenMint);
+      const { blocking } = mintRisks(mintInfo);
+      if (blocking.length > 0) {
+        throw new Error(`${blocking[0]} It cannot be escrowed safely.`);
+      }
+      const tokenProgram = tokenProgramOverride ?? mintInfo.tokenProgram;
       const will = willPda(publicKey);
       const tokenVault = tokenVaultPda(will, tokenMint);
       const ata = getAta(publicKey, tokenMint, tokenProgram);
@@ -310,17 +347,67 @@ export function useVault() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will, vault], CU.TOKEN))
         .rpc();
     },
-    [program, publicKey],
+    [program, publicKey, connection, budget],
+  );
+
+  /**
+   * Escrow native SOL in one transaction: create the owner's wSOL account if
+   * needed (idempotent), move `wrapLamports` into it, `SyncNative`, then
+   * `add_token` for `amount` of the native mint. `wrapLamports` may be less
+   * than `amount` when the owner already holds some wSOL — that is used first.
+   * Heirs receive wSOL, which they can unwrap in any wallet.
+   */
+  const escrowNativeSol = useCallback(
+    async (amount: BN, wrapLamports: BN) => {
+      if (!publicKey) throw new Error("Connect a wallet first");
+      const tokenMint = NATIVE_MINT;
+      const tokenProgram = TOKEN_PROGRAM_ID;
+      const will = willPda(publicKey);
+      const ata = getAta(publicKey, tokenMint, tokenProgram);
+      const vault = getAta(will, tokenMint, tokenProgram);
+
+      const wrap = wrapLamports.gtn(0)
+        ? [
+          createAtaIdempotentIx(publicKey, publicKey, tokenMint, tokenProgram),
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: ata,
+            lamports: BigInt(wrapLamports.toString()),
+          }),
+          syncNativeIx(ata),
+        ]
+        : [];
+
+      return program.methods
+        .addToken(amount)
+        .accountsPartial({
+          owner: publicKey,
+          will,
+          tokenMint,
+          tokenVault: tokenVaultPda(will, tokenMint),
+          ata,
+          vault,
+          tokenProgram,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .preInstructions([
+          ...(await budget([publicKey, will, ata, vault], CU.WRAP_AND_ESCROW)),
+          ...wrap,
+        ])
+        .rpc();
+    },
+    [program, publicKey, budget],
   );
 
   const removeToken = useCallback(
-    async (
-      tokenMint: PublicKey,
-      tokenProgram: PublicKey = TOKEN_PROGRAM_ID,
-    ) => {
+    async (tokenMint: PublicKey, tokenProgramOverride?: PublicKey) => {
       if (!publicKey) throw new Error("Connect a wallet first");
+      const tokenProgram =
+        tokenProgramOverride ?? (await resolveTokenProgram(connection, tokenMint));
       const will = willPda(publicKey);
       const tokenVault = tokenVaultPda(will, tokenMint);
       const ata = getAta(publicKey, tokenMint, tokenProgram);
@@ -338,9 +425,10 @@ export function useVault() {
           tokenProgram,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will, vault], CU.TOKEN))
         .rpc();
     },
-    [program, publicKey],
+    [program, publicKey, connection, budget],
   );
 
   /**
@@ -351,9 +439,11 @@ export function useVault() {
     async (
       ownerKey: PublicKey,
       tokenMint: PublicKey,
-      tokenProgram: PublicKey = TOKEN_PROGRAM_ID,
+      tokenProgramOverride?: PublicKey,
     ) => {
       if (!publicKey) throw new Error("Connect a wallet first");
+      const tokenProgram =
+        tokenProgramOverride ?? (await resolveTokenProgram(connection, tokenMint));
       const will = willPda(ownerKey);
       const tokenVault = tokenVaultPda(will, tokenMint);
       const vault = getAta(will, tokenMint, tokenProgram);
@@ -374,9 +464,10 @@ export function useVault() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, vault], CU.TOKEN))
         .rpc();
     },
-    [program, publicKey],
+    [program, publicKey, connection, budget],
   );
 
   // ---------- Post-inheritance teardown (permissionless cranks) ----------
@@ -410,9 +501,10 @@ export function useVault() {
           associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
           systemProgram: SystemProgram.programId,
         })
+        .preInstructions(await budget([publicKey, will], CU.TOKEN))
         .rpc();
     },
-    [program, publicKey, connection]
+    [program, publicKey, connection, budget]
   );
 
   const cleanupMedia = useCallback(
@@ -427,9 +519,10 @@ export function useVault() {
           will,
           mediaReference: mediaPda(will, mediaIndex),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const cleanupCustodian = useCallback(
@@ -444,9 +537,10 @@ export function useVault() {
           will,
           custodian: custodianPda(will, custodianWallet),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   const cleanupBeneficiary = useCallback(
@@ -461,9 +555,10 @@ export function useVault() {
           will,
           beneficiary: beneficiaryPda(will, beneficiaryWallet),
         })
+        .preInstructions(await budget([publicKey, will], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   /** Closes the will itself; requires every child to have been cleaned up first. */
@@ -477,9 +572,10 @@ export function useVault() {
           owner: ownerKey,
           will: willPda(ownerKey),
         })
+        .preInstructions(await budget([publicKey, willPda(ownerKey)], CU.SIMPLE))
         .rpc();
     },
-    [program, publicKey]
+    [program, publicKey, budget]
   );
 
   return {
@@ -509,6 +605,7 @@ export function useVault() {
     claimInheritance,
     registerRecipientKey,
     addToken,
+    escrowNativeSol,
     removeToken,
     claimToken,
     // teardown

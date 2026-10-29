@@ -4,8 +4,9 @@ import { FC } from "react";
 import dynamic from "next/dynamic";
 import { usePathname } from "next/navigation";
 import { Menu } from "lucide-react";
-import { CLUSTER } from "@/lib/config";
+import { ClusterBadge } from "@/app/components/shared/ClusterBadge";
 import { ScrambleText } from "@/app/components/fx/ScrambleText";
+import { MOBILE_NAV_ID } from "./MobileNavDrawer";
 
 const WalletMultiButton = dynamic(
   () =>
@@ -17,6 +18,8 @@ const WalletMultiButton = dynamic(
 
 interface DashboardHeaderProps {
   onMenuClick: () => void;
+  /** Whether the mobile navigation drawer is open, for `aria-expanded`. */
+  menuOpen?: boolean;
 }
 
 const titles: Record<string, string> = {
@@ -39,7 +42,10 @@ function resolveTitle(pathname: string): string {
   return parent ? titles[parent] : "Dashboard";
 }
 
-export const DashboardHeader: FC<DashboardHeaderProps> = ({ onMenuClick }) => {
+export const DashboardHeader: FC<DashboardHeaderProps> = ({
+  onMenuClick,
+  menuOpen = false,
+}) => {
   const pathname = usePathname();
   const pageTitle = resolveTitle(pathname);
 
@@ -47,9 +53,13 @@ export const DashboardHeader: FC<DashboardHeaderProps> = ({ onMenuClick }) => {
     <header className="z-30 flex h-14 items-center justify-between border-b border-border bg-background px-5">
       <div className="flex items-center gap-3">
         <button
+          type="button"
           onClick={onMenuClick}
           className="-ml-2 p-2 text-muted transition-colors hover:text-foreground lg:hidden"
-          aria-label="Toggle Navigation Menu"
+          aria-label="Open navigation menu"
+          aria-haspopup="dialog"
+          aria-expanded={menuOpen}
+          aria-controls={MOBILE_NAV_ID}
         >
           <Menu className="size-4" />
         </button>
@@ -58,11 +68,8 @@ export const DashboardHeader: FC<DashboardHeaderProps> = ({ onMenuClick }) => {
         </h1>
       </div>
 
-      <div className="flex items-center gap-4">
-        <span className="hidden items-center gap-2 label-mono md:inline-flex">
-          <span className="size-1.5 rounded-full bg-accent" />
-          {CLUSTER}
-        </span>
+      <div className="flex items-center gap-3 sm:gap-4">
+        <ClusterBadge />
         <WalletMultiButton />
       </div>
     </header>

@@ -1,26 +1,5 @@
 import { FC } from "react";
 
-interface TabButtonProps {
-  active: boolean;
-  onClick: () => void;
-  label: string;
-}
-
-export const TabButton: FC<TabButtonProps> = ({ active, onClick, label }) => {
-  return (
-    <button
-      onClick={onClick}
-      className={`px-4 py-2.5 text-xs font-semibold rounded-lg transition-all duration-200 border whitespace-nowrap ${
-        active
-          ? "bg-white/[0.06] border-border-strong text-foreground shadow-lg shadow-black/20"
-          : "border-transparent text-muted hover:text-foreground hover:bg-white/[0.02]"
-      }`}
-    >
-      {label}
-    </button>
-  );
-};
-
 interface PlaceholderTabProps {
   setActiveTab: (tab: string) => void;
 }

@@ -27,7 +27,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "VaultWill — Decentralized Inheritance on Solana",
   description:
-    "Your crypto, passed on automatically — no lawyers, no custody, no trust required. A trustless inheritance protocol on Solana.",
+    "A dead-man's-switch inheritance protocol on Solana: encrypted documents and escrowed tokens released to your heirs by custodian quorum. Unaudited, devnet only.",
 };
 
 export default function RootLayout({

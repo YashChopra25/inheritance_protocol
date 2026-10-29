@@ -3,7 +3,7 @@
 import { useState, useCallback, type ReactNode } from "react";
 
 export { explorerTxUrl, humanizeError, short } from "@/lib/utils";
-import { explorerTxUrl, humanizeError } from "@/lib/utils";
+import { explorerTxUrl, humanizeError, isUncertainTxError } from "@/lib/utils";
 import { ScrambleText } from "@/app/components/fx/ScrambleText";
 
 export function Section({
@@ -93,6 +93,9 @@ export function TxButton({
       onDone?.();
     } catch (e) {
       setMsg({ kind: "err", text: humanizeError(e) });
+      // The outcome is unknown, not failed: re-read on-chain state so the
+      // UI shows whether it landed before the user is tempted to retry.
+      if (isUncertainTxError(e)) onDone?.();
     } finally {
       setBusy(false);
     }

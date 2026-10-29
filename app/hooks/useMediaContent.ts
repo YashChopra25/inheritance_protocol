@@ -1,9 +1,11 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { isSealed, unsealFile } from "@/lib/crypto";
 import { useVaultIdentity, useVaultSession } from "./useVaultSession";
+import { fetchSealedContainer } from "@/app/services/pinata.service";
+import { checkCid } from "@/lib/cid";
 
 /**
  * Fetch a vault document and open it in the browser.
@@ -47,9 +49,16 @@ function isTextual(mime: string): boolean {
 export function useMediaContent(cid: string) {
   const session = useVaultSession();
   const { unlock, wallet } = useVaultIdentity();
-  // Object URLs are revoked when a new one replaces them, so the previous
-  // blob is not leaked for the lifetime of the page.
-  const [previousUrl, setPreviousUrl] = useState<string | null>(null);
+  // Object URLs are revoked when a new one replaces them and when the viewer
+  // unmounts, so a decrypted document never outlives the preview showing it.
+  const urlRef = useRef<string | null>(null);
+  useEffect(
+    () => () => {
+      if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+      urlRef.current = null;
+    },
+    []
+  );
 
   const load = useCallback(async (): Promise<MediaContent> => {
     if (!wallet) throw new Error("Connect a wallet to view this document");
@@ -57,15 +66,10 @@ export function useMediaContent(cid: string) {
     // The retrieve route is authenticated and authorizes against the chain.
     if (!session.signedIn) await session.signIn();
 
-    const res = await fetch(`/api/ipfs/retrieve?cid=${encodeURIComponent(cid)}`, {
-      credentials: "same-origin",
-    });
-    if (!res.ok) {
-      const json = await res.json().catch(() => ({}));
-      throw new Error(json.error || `Could not load document (${res.status})`);
-    }
-
-    const container = new Uint8Array(await res.arrayBuffer());
+    const container = await fetchSealedContainer(cid);
+    // The CID came from the chain; the bytes came through our server. Refuse
+    // to open anything that provably is not what the will recorded.
+    await checkCid(cid, container);
     if (!isSealed(container)) {
       throw new Error(
         "This document predates encrypted storage and can no longer be opened. Re-upload it to seal it."
@@ -88,10 +92,8 @@ export function useMediaContent(cid: string) {
     const url = URL.createObjectURL(
       new Blob([bytes as BlobPart], { type: mime })
     );
-    setPreviousUrl((prev) => {
-      if (prev) URL.revokeObjectURL(prev);
-      return url;
-    });
+    if (urlRef.current) URL.revokeObjectURL(urlRef.current);
+    urlRef.current = url;
     return {
       ...EMPTY,
       objectUrl: url,
@@ -108,8 +110,11 @@ export function useMediaContent(cid: string) {
     queryKey: ["mediaContent", cid, wallet],
     queryFn: load,
     enabled: !!cid && !!wallet,
-    // Ciphertext for a CID never changes, and decryption is not free.
+    // Ciphertext for a CID never changes, and decryption is not free — but the
+    // result holds an object URL revoked on unmount, so it must not be cached
+    // past this viewer (gcTime 0), and plaintext should not linger in memory.
     staleTime: 5 * 60_000,
+    gcTime: 0,
     retry: false,
   });
 
@@ -125,6 +130,33 @@ export function useMediaContent(cid: string) {
     document.body.removeChild(a);
   }, [content.objectUrl, content.fileName]);
 
+  /**
+   * Save the ENCRYPTED container locally. It is useless without the holder's
+   * wallet, so it is safe to keep anywhere — and it means the document no
+   * longer depends on this app's storage account surviving: the bytes can be
+   * re-pinned to any IPFS node, where the CID recorded on-chain finds them.
+   */
+  const downloadSealedBackup = useCallback(async () => {
+    if (!session.signedIn) await session.signIn();
+    const container = await fetchSealedContainer(cid);
+    await checkCid(cid, container);
+    const url = URL.createObjectURL(
+      new Blob([container as BlobPart], { type: "application/octet-stream" })
+    );
+    try {
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${cid}.vseal`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } finally {
+      // Deferred so the browser has started the download before the URL dies.
+      setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cid, session.signedIn]);
+
   return {
     loading: query.isLoading || query.isFetching,
     error: query.error instanceof Error ? query.error.message : null,
@@ -136,7 +168,6 @@ export function useMediaContent(cid: string) {
     mimeType: content.mimeType,
     fileSize: content.fileSize,
     downloadFile,
-    // Kept for callers that render a "previous preview" placeholder.
-    previousUrl,
+    downloadSealedBackup,
   };
 }

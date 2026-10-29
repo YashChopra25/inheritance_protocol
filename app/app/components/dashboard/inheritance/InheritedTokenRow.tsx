@@ -26,7 +26,9 @@ export const InheritedTokenRow: FC<InheritedTokenRowProps> = ({
   refresh,
 }) => {
   const vault = useVault();
-  const nothingToClaim = Number(token.myShare) <= 0;
+  // `myShare` is an exact formatUnits string; comparing it as a string avoids
+  // the float round-trip that `Number()` would take on very large amounts.
+  const nothingToClaim = token.myShare === "0";
 
   return (
     <li className="flex flex-col gap-2 rounded-lg border border-border bg-black/20 px-3.5 py-3 text-xs">
@@ -65,6 +67,7 @@ export const InheritedTokenRow: FC<InheritedTokenRowProps> = ({
         </p>
       ) : (
         <TxButton
+          // The token program (legacy or Token-2022) is resolved from the mint.
           action={() => vault.claimToken(owner, token.tokenMint)}
           onDone={refresh}
         >

@@ -8,15 +8,15 @@ import { paintVaultWheel } from "@/app/components/fx/artwork";
 const pillars = [
   {
     title: "Non-custodial by design",
-    body: "Your files, your keys. The contract never holds your data — only IPFS content hashes — and only the rules you signed can open it.",
+    body: "Your files are encrypted in your browser before upload. The contract stores only IPFS content hashes; the keys to open a file are sealed to you and the heirs you named.",
   },
   {
     title: "Custodian-gated release",
-    body: "The will turns claimable only after you go inactive and an M-of-N quorum confirms. No off-chain authority can override it.",
+    body: "The will turns claimable only after you stop checking in, an M-of-N quorum confirms, and a 7-day grace period passes in which you can still revoke.",
   },
   {
     title: "Open & auditable logic",
-    body: "Source verified on Solana Explorer. Two independent audits in progress (OtterSec and Neodyme).",
+    body: "The program is open source with a test suite you can run yourself. It has not been independently audited yet, which is why it runs on devnet only.",
   },
   {
     title: "Owner stays in control",
@@ -57,7 +57,7 @@ export function Security() {
           </SquigglyText>
           <p className="mt-4 max-w-md text-[15px] leading-relaxed text-muted">
             <ScrambleText
-              text="VaultWill executes a contract you read, signed, and can verify on-chain. Your files are encrypted before they ever reach IPFS. No backdoors, no admin keys, no recovery hotline. That is the point."
+              text="VaultWill runs on an open-source program whose rules you can read, and every state change is a public transaction. Files are encrypted before they reach IPFS. The program has no admin instructions — no one can move an estate around the rules. Storage and document delivery still run through this app's server, so keep your own copies."
               speed={200}
             />
           </p>
@@ -79,9 +79,9 @@ export function Security() {
             </div>
             <dl className="flex-1 border-t border-border text-sm">
               {[
-                ["Program", "verified"],
-                ["Audits", "2 in progress"],
-                ["Admin keys", "none"],
+                ["Program", "open source"],
+                ["Audit", "not yet"],
+                ["Network", "devnet only"],
               ].map(([k, v]) => (
                 <div
                   key={k}
@@ -99,7 +99,7 @@ export function Security() {
           <div className="mt-10 border border-border">
             <div className="flex items-center justify-between border-b border-border px-4 py-2.5">
               <span className="label-mono">custodian.rs</span>
-              <span className="label-mono text-neon">verified</span>
+              <span className="label-mono text-muted">simplified excerpt</span>
             </div>
             <pre className="overflow-x-auto px-4 py-4 font-mono text-[11px] leading-relaxed text-muted">
               {SOURCE}

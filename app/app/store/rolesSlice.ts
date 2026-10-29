@@ -9,8 +9,13 @@ export interface RolesState {
   data: MyRoles;
   status: "idle" | "loading" | "ready" | "error";
   error: string | null;
-  /** Base58 of the wallet `data` describes — used to ignore stale responses. */
+  /**
+   * Base58 of the wallet the latest load was for. Responses for any other
+   * wallet are stale (the user switched or disconnected) and are dropped.
+   */
   wallet: string | null;
+  /** `Date.now()` of the last successful load; null until one lands. */
+  fetchedAt: number | null;
 }
 
 const initialState: RolesState = {
@@ -18,6 +23,7 @@ const initialState: RolesState = {
   status: "idle",
   error: null,
   wallet: null,
+  fetchedAt: null,
 };
 
 export const loadMyRoles = createAsyncThunk<
@@ -44,17 +50,28 @@ const rolesSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(loadMyRoles.pending, (state) => {
+      .addCase(loadMyRoles.pending, (state, action) => {
+        const wallet = action.meta.arg.wallet.toBase58();
+        // A different wallet's roles must never be shown, even briefly, while
+        // this one's load is in flight.
+        if (state.wallet !== wallet) {
+          state.data = EMPTY_ROLES;
+          state.fetchedAt = null;
+        }
+        state.wallet = wallet;
         state.status = "loading";
         state.error = null;
       })
       .addCase(loadMyRoles.fulfilled, (state, action) => {
+        // Stale: the wallet changed (or disconnected) while this was loading.
+        if (action.payload.wallet !== state.wallet) return;
         state.status = "ready";
-        state.wallet = action.payload.wallet;
         state.data = action.payload.roles;
         state.error = null;
+        state.fetchedAt = Date.now();
       })
       .addCase(loadMyRoles.rejected, (state, action) => {
+        if (action.meta.arg.wallet.toBase58() !== state.wallet) return;
         state.status = "error";
         state.error =
           action.payload ?? action.error.message ?? "Failed to load your wills";

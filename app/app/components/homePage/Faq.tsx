@@ -7,11 +7,11 @@ import { SectionHead } from "./SectionHead";
 const faqs = [
   {
     q: "Does VaultWill hold my crypto?",
-    a: "No. The program never custodies SOL, SPL tokens, or NFTs. It stores the content hashes (IPFS CIDs) of the files you seal, your beneficiaries and their allocation splits, and your custodians. What your heirs inherit is access to the encrypted payload you uploaded — not funds moved by the contract.",
+    a: "Only what you choose to escrow. Tokens you deposit (SPL tokens, or SOL as wrapped SOL) sit in a vault owned by your will's program address — not by us — and you can withdraw them while the will is active. Everything else stays in your wallet. For documents, the program stores only IPFS content hashes, your beneficiaries and their splits, and your custodians.",
   },
   {
     q: "What actually unlocks the will?",
-    a: "Two gates. First, your inactivity window has to elapse — staying active keeps everything sealed. Then your custodians sign on-chain death confirmations; once the M-of-N quorum you set is reached, the will becomes Claimable and each beneficiary can claim.",
+    a: "Three gates. First, your inactivity window has to elapse — only an explicit check-in from the dashboard resets it; ordinary wallet activity does not. Then your custodians sign on-chain death confirmations. Once the M-of-N quorum is reached, a 7-day grace period starts in which you can still revoke; after it, each beneficiary can claim.",
   },
   {
     q: "Who are custodians, and what can they see?",
@@ -23,11 +23,11 @@ const faqs = [
   },
   {
     q: "What can I store, and is it private?",
-    a: "Any file type — documents, keys, images, video — pinned to IPFS. Encrypt it client-side before uploading; the chain only ever sees the CID and a short media-type tag, never the contents.",
+    a: "Any file type — documents, keys, images, video. Files are encrypted in your browser and the key is sealed to you and each heir who has registered a document key, then pinned to IPFS through this app's server. The chain only sees the CID and a short media-type tag. Note that a sealed heir holds a working key from upload onward, so only seal documents to people you trust with them; and keep your own copies, since pinning depends on the operator.",
   },
   {
     q: "What does it cost?",
-    a: "Just Solana rent and fees. Each on-chain account (the will, each beneficiary, custodian, and media reference) is a small rent deposit that's refunded when you remove it or close the will. The protocol itself takes no fee.",
+    a: "Just Solana rent and network fees (including a small priority fee so transactions land). Each on-chain account is a rent deposit that's refunded when you remove it or the estate is closed. The protocol itself takes no fee. It currently runs on devnet only, with test funds.",
   },
 ];
 

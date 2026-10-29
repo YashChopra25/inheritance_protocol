@@ -10,8 +10,15 @@ import { RPC_ENDPOINT } from "@/lib/config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "sonner";
 import { ReduxProvider } from "@/app/store/ReduxProvider";
+import { useVaultSessionLifecycle } from "@/hooks/useVaultSession";
 
 import "@solana/wallet-adapter-react-ui/styles.css";
+
+/** Hooks that must run once for the whole app, inside every provider. */
+function AppLifecycle() {
+  useVaultSessionLifecycle();
+  return null;
+}
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const endpoint = useMemo(() => RPC_ENDPOINT, []);
@@ -29,6 +36,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <WalletModalProvider>
           <QueryClientProvider client={queryClient}>
             <ReduxProvider>
+              <AppLifecycle />
               {children}
               <Toaster richColors theme="dark" position="bottom-right" />
             </ReduxProvider>

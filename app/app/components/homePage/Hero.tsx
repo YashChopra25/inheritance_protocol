@@ -20,7 +20,7 @@ export function Hero() {
           <div className="flex items-center gap-2 label-mono">
             <span className="size-1.5 rounded-full bg-neon" />
             <ScrambleText
-              text="Solana devnet · audit in progress"
+              text="Solana devnet · unaudited preview"
               trigger="view"
               speed={54}
             />
@@ -41,7 +41,7 @@ export function Hero() {
             className="mt-8 max-w-lg text-[15px] leading-relaxed text-muted"
           >
             <ScrambleText
-              text="Seal your documents, keys and final messages on IPFS. Name your heirs, appoint custodians. Go quiet for long enough, and the program hands over exactly what you sealed — to exactly who you named."
+              text="Seal your documents, keys and final messages on IPFS. Name your heirs, appoint custodians. Stop checking in for long enough, and once your custodians confirm, the program releases what you sealed to the people you named."
               speed={130}
             />
           </SquigglyText>

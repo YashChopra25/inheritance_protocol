@@ -39,7 +39,6 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
   );
 
   const status = will ? willStatusLabel(will.willStatus) : null;
-  const claimable = status === "claimable";
 
   const content = (
     <>
@@ -50,7 +49,7 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-black/10 p-4">
         <Field label="Or enter a will owner's public key manually">
           <Input
-            placeholder="e.g. 9xVuPq3Tn8eK4mJ2hL5rDc7s..."
+            placeholder="Will owner's wallet address"
             value={ownerStr}
             onChange={(e) => setOwnerStr(e.target.value)}
           />
@@ -60,7 +59,7 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
       {owner && loading && (
         <div className="flex items-center gap-2 text-xs text-muted py-3">
           <div className="size-3.5 animate-spin rounded-full border-2 border-border-strong border-t-accent" />
-          <span>Searching Solana blockchain for active wills…</span>
+          <span>Looking up this will on-chain…</span>
         </div>
       )}
       {ownerStr.trim() && !owner && (
@@ -80,7 +79,6 @@ export const ActPanel: FC<ActPanelProps> = ({ noWrapper = false }) => {
           owner={owner!}
           me={me}
           status={status}
-          claimable={claimable}
           myCustodian={myCustodian}
           myBeneficiary={myBeneficiary}
           refresh={refresh}

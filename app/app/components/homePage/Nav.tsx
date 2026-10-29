@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { Logo } from "./Logo";
 import { ScrambleText, ScrambleZone } from "@/app/components/fx/ScrambleText";
+import { ClusterBadge } from "@/app/components/shared/ClusterBadge";
 
 const links = [
   { href: "#how", label: "How it works" },
@@ -35,6 +36,7 @@ export function Nav() {
         </nav>
 
         <div className="flex items-center gap-2.5">
+          <ClusterBadge />
           <a
             href="#demo"
             className="hidden sm:inline-flex h-9 items-center border border-border-strong px-3.5 text-[12px] text-muted transition-colors hover:border-foreground hover:text-foreground"

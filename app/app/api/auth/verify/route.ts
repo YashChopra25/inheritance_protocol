@@ -4,9 +4,16 @@ import {
   createSessionToken,
   SESSION_COOKIE,
   SESSION_MAX_AGE_SECONDS,
+  signInOrigin,
   verifyChallenge,
 } from "@/lib/server/session";
-import { rateLimit, serverError, WRITE_LIMIT } from "@/lib/server/guard";
+import {
+  rateLimit,
+  rateLimitByIp,
+  readJson,
+  serverError,
+  WRITE_LIMIT,
+} from "@/lib/server/guard";
 
 export const runtime = "nodejs";
 
@@ -20,8 +27,9 @@ export const runtime = "nodejs";
  */
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
-    const { token, wallet, message, signature } = body ?? {};
+    const json = await readJson(request);
+    if (!json.ok) return json.response;
+    const { token, wallet, message, signature } = json.body;
 
     if (
       typeof token !== "string" ||
@@ -35,10 +43,20 @@ export async function POST(request: Request) {
       );
     }
 
-    const limited = rateLimit(`verify:${wallet}`, WRITE_LIMIT);
+    const limited =
+      (await rateLimit(`verify:${wallet}`, WRITE_LIMIT)) ??
+      (await rateLimitByIp(request, "verify"));
     if (limited) return limited;
 
-    const result = verifyChallenge(token, wallet, message, signature);
+    // Recomputed independently from this request, never taken from the body:
+    // a signature collected on another origin must not verify here.
+    const result = await verifyChallenge(
+      token,
+      wallet,
+      message,
+      signature,
+      signInOrigin(request)
+    );
     if (!result.ok) {
       return NextResponse.json({ error: result.error }, { status: 401 });
     }

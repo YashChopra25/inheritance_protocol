@@ -4,7 +4,7 @@ import {
   invalidCidResponse,
   isValidCid,
   rateLimit,
-  READ_LIMIT,
+  BULK_READ_LIMIT,
   requireSession,
   serverError,
 } from "@/lib/server/guard";
@@ -25,34 +25,34 @@ export async function GET(request: Request) {
     const auth = await requireSession();
     if (!auth.ok) return auth.response;
 
-    const limited = rateLimit(`metadata:${auth.wallet}`, READ_LIMIT);
+    const limited = await rateLimit(`metadata:${auth.wallet}`, BULK_READ_LIMIT);
     if (limited) return limited;
 
     const cid = new URL(request.url).searchParams.get("cid");
     if (!isValidCid(cid)) return invalidCidResponse();
 
-    const decision = await authorizeCid(auth.wallet, cid, "read");
-    if (!decision.allowed) {
-      return NextResponse.json({ error: decision.reason }, { status: 403 });
-    }
-
     const pinata = getPinata();
-    const response = await pinata.files.private.list().cid(cid);
-    const file = response?.files?.[0];
-    if (!file) {
+    const decision = await authorizeCid(pinata, auth.wallet, cid, "read");
+    if (decision.notPinned) {
       return NextResponse.json(
         { error: "That document is not pinned" },
         { status: 404 },
       );
     }
+    if (!decision.allowed) {
+      return NextResponse.json({ error: decision.reason }, { status: 403 });
+    }
+
+    const file = decision.pins[0];
     return NextResponse.json(
       {
         id: file.id,
         cid: file.cid,
-        /** Size of the CIPHERTEXT, not the original file. */
+        /** Operator-visible pin label — NOT the real filename (C5). */
         name: file.name,
+        /** Size of the CIPHERTEXT, not the original file. */
         size: file.size,
-        createdAt: file.created_at,
+        createdAt: file.createdAt,
       },
       { headers: { "Cache-Control": "no-store" } },
     );

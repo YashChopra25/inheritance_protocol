@@ -33,16 +33,20 @@ const AssetsPage: FC = () => {
               <Sparkles className="size-3" /> Secure Escrow
             </div>
             <h2 className="text-lg font-semibold text-foreground">
-              Trustless SOL & Token Distribution
+              Token Escrow & Distribution
             </h2>
             <p className="text-xs text-muted leading-relaxed max-w-xl">
-              Configure automatic custody-free escrow of your liquid Solana assets.
-              Upon inactivity validation, your tokens are unlocked and claimable by heirs according to your settings.
+              Escrow SPL tokens into a vault owned by your will. Once your
+              custodians confirm and the grace period passes, each heir can
+              claim their share according to their allocation.
             </p>
           </div>
           <div className="flex items-center gap-2 text-xs font-semibold text-[var(--warn)] bg-[var(--warn)]/10 border border-[var(--warn)]/20 rounded-xl px-4 py-3 sm:max-w-xs">
             <ShieldAlert className="size-5 shrink-0" />
-            <span>Escrow contracts currently undergoing Halborn security audits.</span>
+            <span>
+              Escrowed tokens stay locked until your custodians confirm and the
+              grace period ends. Only escrow what you are prepared to lock.
+            </span>
           </div>
         </div>
       </div>

@@ -1,17 +1,27 @@
 "use client";
 
-import { ReactNode, useEffect, useState, useSyncExternalStore } from "react";
+import {
+  ReactNode,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useVault } from "@/hooks/useVault";
 import { useWill } from "@/hooks/useWill";
-import { useAppDispatch } from "@/app/store/hooks";
+import { useAppDispatch, useAppStore } from "@/app/store/hooks";
 import { clearWills, setConnectedOwner } from "@/app/store/willSlice";
+import { clearRoles } from "@/app/store/rolesSlice";
+import { useAutoRefresh } from "@/hooks/useAutoRefresh";
 import { DashboardSidebar } from "@/app/components/dashboard/shared/DashboardSidebar";
 import { DashboardHeader } from "@/app/components/dashboard/shared/DashboardHeader";
 import { DisconnectedView } from "@/app/components/dashboard/shared/DisconnectedView";
 import { VaultLoader } from "@/app/components/dashboard/shared/VaultLoader";
 import { DeathConfirmationBanner } from "@/app/components/dashboard/shared/DeathConfirmationBanner";
-import { X } from "lucide-react";
+import { WillLoadError } from "@/app/components/dashboard/shared/WillLoadError";
+import { MobileNavDrawer } from "@/app/components/dashboard/shared/MobileNavDrawer";
 
 /** The mount state never changes after hydration, so there is nothing to subscribe to. */
 const subscribeNever = () => () => {};
@@ -27,21 +37,45 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     () => false
   );
   const [mobileOpen, setMobileOpen] = useState(false);
+  // Stable, so the drawer's focus-trap effect is not torn down every render.
+  const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   const vault = useVault();
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   const walletKey = vault.publicKey?.toBase58() ?? null;
 
   // Tell the store whose will the dashboard is showing, and drop every cached
-  // will on disconnect so the next wallet never sees the previous one's estate.
+  // will whenever the wallet goes away or is switched directly to another
+  // account, so the next wallet never sees the previous one's estate. Roles
+  // are cleared on disconnect; a switch is handled inside the roles slice,
+  // which discards any list that belongs to a different wallet.
+  //
+  // Not on first connect: child pages' loads for the new wallet are already in
+  // flight by the time this effect runs, and clearing would discard them.
+  const prevWallet = useRef<string | null>(null);
   useEffect(() => {
+    const prev = prevWallet.current;
+    prevWallet.current = walletKey;
+    if (prev && prev !== walletKey) dispatch(clearWills(walletKey));
+    if (!walletKey) dispatch(clearRoles());
     dispatch(setConnectedOwner(walletKey));
-    if (!walletKey) dispatch(clearWills());
   }, [dispatch, walletKey]);
 
   // Loads the will into `state.will.byOwner`; every page reads it from there
   // via `useDashboard()` rather than having it passed down.
-  const { data, loading, refresh } = useWill(vault.publicKey);
+  const { data, loading, error, refresh } = useWill(vault.publicKey);
+
+  // Changes made by OTHER wallets — above all a custodian confirming death —
+  // only reach the owner if the will is re-read. See `useAutoRefresh`.
+  // The poll reports failure (a rejected load, e.g. rate-limited) so the
+  // auto-refresh can back off instead of retrying at full rate.
+  const poll = useCallback(async () => {
+    await refresh();
+    if (!walletKey) return true;
+    return store.getState().will.byOwner[walletKey]?.status !== "error";
+  }, [refresh, store, walletKey]);
+  useAutoRefresh(poll, { enabled: connected && !!walletKey });
 
   if (!mounted) {
     return (
@@ -62,8 +96,21 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     if (loading && !data) {
       return <VaultLoader />;
     }
+    // Nothing could be read. Rendering the pages here would show "create your
+    // will" to an owner who has one, so show the failure instead.
+    if (!data && error) {
+      return (
+        <div className="max-w-7xl mx-auto px-6 py-8 w-full">
+          <WillLoadError variant="fatal" message={error} retry={refresh} />
+        </div>
+      );
+    }
     return (
       <div className="max-w-7xl mx-auto px-6 py-8 w-full flex flex-col gap-6">
+        {/* The will loaded, but a refresh or one of its child lists failed. */}
+        {data && error && (
+          <WillLoadError variant="partial" message={error} retry={refresh} />
+        )}
         {/* C3: shown on every dashboard page — an owner returning to a wrongly
             confirmed will may land anywhere, and the window to cancel is finite. */}
         <DeathConfirmationBanner will={data?.will ?? null} refresh={refresh} />
@@ -81,29 +128,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <DashboardSidebar />
       </div>
 
-      {/* Mobile Sidebar (Drawer Overlay) */}
-      {mobileOpen && (
-        <div className="fixed inset-0 z-50 flex lg:hidden">
-          <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setMobileOpen(false)}
-          />
-          <div className="relative flex h-full w-64 max-w-xs flex-col bg-surface">
-            <button
-              onClick={() => setMobileOpen(false)}
-              className="absolute right-3 top-3 p-2 text-muted transition-colors hover:text-foreground"
-              aria-label="Close menu"
-            >
-              <X className="size-4" />
-            </button>
-            <DashboardSidebar onClose={() => setMobileOpen(false)} />
-          </div>
-        </div>
-      )}
+      <MobileNavDrawer open={mobileOpen} onClose={closeMobile} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 z-10">
-        <DashboardHeader onMenuClick={() => setMobileOpen(true)} />
+        <DashboardHeader
+          onMenuClick={() => setMobileOpen(true)}
+          menuOpen={mobileOpen}
+        />
         <main className="flex-1 overflow-y-auto">{renderContent()}</main>
       </div>
     </div>

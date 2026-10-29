@@ -103,6 +103,9 @@ jobs:
       - name: Lint
         run: npx eslint .
 
+      - name: Unit tests
+        run: npm test
+
       - name: Build
         env:
           # Build-time public config. Real secrets are not needed to compile.
@@ -123,7 +126,36 @@ jobs:
       run:
         working-directory: ./app
     steps:
+      # `clean: false` is load-bearing. The default (`git clean -ffdx`) deletes
+      # every ignored file in the workspace — including the `.next` build and
+      # `.env` that the live PM2 process is serving from — before anything else
+      # runs, which both broke the running site mid-deploy and left nothing to
+      # roll back to. Tracked files are still force-checked-out to the commit.
       - uses: actions/checkout@v4
+        with:
+          clean: false
+
+      # Snapshot what is serving right now so a failed build or health check
+      # can put it back. Copied (not moved): the live server lazily reads chunks
+      # from `.next` and must keep working while the new build runs.
+      #
+      # Best effort by nature: `npm ci` below still replaces node_modules, so a
+      # rollback runs the previous build against the new dependency tree. That
+      # is the right trade for a lockfile-pinned tree; anything subtler needs
+      # release directories (build into a fresh dir, then flip a symlink).
+      - name: Preserve current build
+        id: preserve
+        run: |
+          set -euo pipefail
+          rm -rf .next.prev .env.prev
+          if [ -d .next ]; then
+            cp -a .next .next.prev
+            if [ -f .env ]; then cp -a .env .env.prev; fi
+            echo "has_prev=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "No existing build; nothing to roll back to on failure."
+            echo "has_prev=false" >> "$GITHUB_OUTPUT"
+          fi
 
       # Written fresh with `>` rather than appended with `>>`: the previous
       # pipeline appended on a persistent self-hosted runner, so the file grew
@@ -137,6 +169,12 @@ jobs:
           NEXT_PUBLIC_SOLANA_CLUSTER: ${{ secrets.NEXT_PUBLIC_SOLANA_CLUSTER }}
           NEXT_PUBLIC_RPC_ENDPOINT: ${{ secrets.NEXT_PUBLIC_RPC_ENDPOINT }}
           NEXT_PUBLIC_PROGRAM_ID: ${{ secrets.NEXT_PUBLIC_PROGRAM_ID }}
+          # Optional. Each is written only when configured, so an unset secret
+          # leaves the app on its documented default instead of an empty value.
+          APP_ORIGIN: ${{ secrets.APP_ORIGIN }}
+          SOLANA_RPC_URL: ${{ secrets.SOLANA_RPC_URL }}
+          UPSTASH_REDIS_REST_URL: ${{ secrets.UPSTASH_REDIS_REST_URL }}
+          UPSTASH_REDIS_REST_TOKEN: ${{ secrets.UPSTASH_REDIS_REST_TOKEN }}
         run: |
           set -euo pipefail
           : "${SESSION_SECRET:?SESSION_SECRET must be configured}"
@@ -150,6 +188,9 @@ jobs:
             echo "NEXT_PUBLIC_SOLANA_CLUSTER=${NEXT_PUBLIC_SOLANA_CLUSTER}"
             echo "NEXT_PUBLIC_RPC_ENDPOINT=${NEXT_PUBLIC_RPC_ENDPOINT}"
             echo "NEXT_PUBLIC_PROGRAM_ID=${NEXT_PUBLIC_PROGRAM_ID}"
+            for name in APP_ORIGIN SOLANA_RPC_URL UPSTASH_REDIS_REST_URL UPSTASH_REDIS_REST_TOKEN; do
+              if [ -n "${!name:-}" ]; then echo "${name}=${!name}"; fi
+            done
           } > .env
 
       - name: Install and build
@@ -172,6 +213,28 @@ jobs:
             fi
             sleep 3
           done
-          echo "::error::App did not become healthy; rolling back"
-          pm2 reload vault-inheritance --update-env || true
+          echo "::error::App did not become healthy"
+          exit 1
+
+      # Runs when ANY step after the snapshot failed — a broken build leaves a
+      # half-written `.next` under the live process just as surely as a bad
+      # release fails its health check. Restores the previous build and env,
+      # reloads PM2 onto them, and the job still ends red.
+      - name: Roll back to previous build
+        if: failure() && steps.preserve.outputs.has_prev == 'true'
+        run: |
+          set -euo pipefail
+          echo "::warning::Deploy failed; restoring the previous build"
+          rm -rf .next
+          mv .next.prev .next
+          if [ -f .env.prev ]; then mv .env.prev .env; fi
+          pm2 reload vault-inheritance --update-env
+          for i in $(seq 1 20); do
+            if curl -fsS --max-time 5 http://127.0.0.1:3001/ > /dev/null; then
+              echo "previous build is serving again after ${i} attempt(s)"
+              exit 1
+            fi
+            sleep 3
+          done
+          echo "::error::Rollback did not become healthy either; manual intervention needed"
           exit 1

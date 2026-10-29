@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import bs58 from "bs58";
@@ -51,7 +51,7 @@ export function useVaultSession() {
       if (!wallet) throw new Error("Connect a wallet first");
       if (!signMessage) {
         throw new Error(
-          "This wallet cannot sign messages, which is required to sign in."
+          "This wallet cannot sign messages, which is required to sign in. Some hardware-wallet connections do not support message signing — try the wallet's software connection."
         );
       }
 
@@ -119,6 +119,8 @@ export function useVaultSession() {
  * page load, which is the right trade for an inheritance vault.
  */
 const identityCache = new Map<string, RecipientKeypair>();
+/** Wallets whose cached identity has passed the determinism check this page load. */
+const verifiedIdentities = new Set<string>();
 
 export function useVaultIdentity() {
   const { publicKey, signMessage } = useWallet();
@@ -132,7 +134,7 @@ export function useVaultIdentity() {
     if (existing) return existing;
     if (!signMessage) {
       throw new Error(
-        "This wallet cannot sign messages, which is required to unseal documents."
+        "This wallet cannot sign messages, which is required to unseal documents. Some hardware-wallet connections do not support message signing — try the wallet's software connection."
       );
     }
     const identity = await deriveRecipientKeypair(signMessage);
@@ -140,13 +142,87 @@ export function useVaultIdentity() {
     return identity;
   }, [wallet, signMessage]);
 
+  /**
+   * Derive the identity with a determinism check (two signatures that must
+   * match). Use before PUBLISHING a key: a key the wallet cannot reproduce
+   * would lock its holder out of every document sealed to it. A cached
+   * identity is still re-checked against one fresh signature.
+   */
+  const unlockVerified = useCallback(async (): Promise<RecipientKeypair> => {
+    if (!wallet) throw new Error("Connect a wallet first");
+    if (!signMessage) {
+      throw new Error(
+        "This wallet cannot sign messages, which is required to hold a document key. Some hardware-wallet connections do not support message signing — try the wallet's software connection."
+      );
+    }
+    const existing = identityCache.get(wallet);
+    if (existing && verifiedIdentities.has(wallet)) return existing;
+    if (existing) {
+      const fresh = await deriveRecipientKeypair(signMessage);
+      const same = fresh.publicKey.every((b, i) => b === existing.publicKey[i]);
+      if (!same) {
+        identityCache.delete(wallet);
+        throw new Error(
+          "This wallet produces a different document key each time it signs, so it cannot hold a stable key. Use a wallet with standard (deterministic) message signing."
+        );
+      }
+      verifiedIdentities.add(wallet);
+      return existing;
+    }
+    const identity = await deriveRecipientKeypair(signMessage, {
+      verifyDeterministic: true,
+    });
+    identityCache.set(wallet, identity);
+    verifiedIdentities.add(wallet);
+    return identity;
+  }, [wallet, signMessage]);
+
   /** Forget the in-memory key — call on disconnect. */
   const lock = useCallback(() => {
-    if (wallet) identityCache.delete(wallet);
+    if (wallet) {
+      identityCache.delete(wallet);
+      verifiedIdentities.delete(wallet);
+    }
   }, [wallet]);
 
   return useMemo(
-    () => ({ wallet, identity: cached, unlocked: !!cached, unlock, lock }),
-    [wallet, cached, unlock, lock]
+    () => ({
+      wallet,
+      identity: cached,
+      unlocked: !!cached,
+      unlock,
+      unlockVerified,
+      lock,
+    }),
+    [wallet, cached, unlock, unlockVerified, lock]
   );
+}
+
+/**
+ * End the previous wallet's session when the connected wallet goes away or
+ * changes: forget its in-memory document key and clear the API cookie, so the
+ * next person at this browser inherits neither. Mount once, near the root.
+ */
+export function useVaultSessionLifecycle() {
+  const { publicKey } = useWallet();
+  const queryClient = useQueryClient();
+  const wallet = publicKey?.toBase58() ?? null;
+  const previous = useRef<string | null>(null);
+
+  useEffect(() => {
+    const prev = previous.current;
+    previous.current = wallet;
+    if (!prev || prev === wallet) return;
+
+    identityCache.delete(prev);
+    verifiedIdentities.delete(prev);
+    void fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "same-origin",
+    })
+      .catch(() => undefined)
+      .finally(() =>
+        queryClient.invalidateQueries({ queryKey: ["authSession"] })
+      );
+  }, [wallet, queryClient]);
 }

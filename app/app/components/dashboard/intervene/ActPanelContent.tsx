@@ -1,10 +1,14 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useVault } from "@/hooks/useVault";
 import { TxButton, short } from "../shared/ui";
-import { InheritedDocumentsList } from "./InheritedDocumentsList";
+import { BeneficiaryActions } from "./BeneficiaryActions";
+import { useNow } from "@/hooks/useNow";
+import { useMyRoles } from "@/hooks/useMyRoles";
+import { claimTimeline } from "@/lib/inheritance";
+import { GRACE_PERIOD_SECONDS } from "@/lib/config";
 import { RecipientKeyCard } from "./RecipientKeyCard";
 import type { WillBundle } from "@/hooks/useWill";
 
@@ -13,38 +17,47 @@ interface ActPanelContentProps {
   owner: PublicKey;
   me: PublicKey | null;
   status: string | null;
-  claimable: boolean;
-  myCustodian?: { account: { hasApproved: boolean } };
+  myCustodian?: { account: { hasApproved: boolean; approvedEpoch: number } };
   myBeneficiary?: { account: { allocationPercentage: number; hasClaimed: boolean } };
   refresh: () => void;
 }
+
+/** e.g. "7-day", for prose about the owner's revoke window. */
+const GRACE = `${Math.round(GRACE_PERIOD_SECONDS / 86_400)}-day`;
 
 export const ActPanelContent: FC<ActPanelContentProps> = ({
   data,
   owner,
   me,
   status,
-  claimable,
   myCustodian,
   myBeneficiary,
   refresh,
 }) => {
   const vault = useVault();
 
-  // Live clock (set off-render to keep the component pure), mirroring CountdownTracker.
-  const [now, setNow] = useState<number>(0);
-  useEffect(() => {
-    const timer = setTimeout(() => setNow(Date.now()), 0);
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
-  }, []);
+  const nowSecs = useNow();
+  const now = nowSecs === null ? 0 : nowSecs * 1000;
+  const { refresh: refreshRoles } = useMyRoles();
 
   const will = data?.will ?? null;
 
   if (!will) return null;
+
+  // Confirming death or claiming changes this wallet's standing in the roles
+  // list as well as the will itself.
+  const onChanged = () => {
+    refresh();
+    refreshRoles();
+  };
+
+  const timeline = claimTimeline(status ?? "", will.claimableAt.toNumber(), nowSecs);
+
+  // A confirmation only counts in the will's current approval epoch: one cast
+  // before the owner revoked is void, and the custodian may confirm again.
+  const hasCurrentApproval =
+    !!myCustodian?.account.hasApproved &&
+    myCustodian.account.approvedEpoch === will.approvalEpoch;
 
   // The program enforces the dead-man's switch: a custodian can only confirm
   // death once the owner has been silent past their inactivity threshold. Gate
@@ -58,7 +71,18 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
     <div className="mt-4 flex flex-col gap-5">
       {/* C5: an heir must publish an encryption key BEFORE the owner uploads,
           so this sits at the top of everything they can act on. */}
-      {myBeneficiary && <RecipientKeyCard ownerAddress={owner.toBase58()} />}
+      {/* `register_recipient_key` reverts with WillNotActive once death
+          confirmation is in flight, so the card is shown disabled then. */}
+      {myBeneficiary && (
+        <RecipientKeyCard
+          ownerAddress={owner.toBase58()}
+          disabledReason={
+            status === "active"
+              ? undefined
+              : "This will is no longer active, so its document key can no longer be registered or changed."
+          }
+        />
+      )}
 
       {/* Will Overview Tag */}
       <div className="flex flex-col gap-3 rounded-xl border border-border bg-black/25 p-4">
@@ -88,26 +112,26 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
             <span className="rounded bg-white/10 px-2 py-0.5 text-[9px] uppercase tracking-wide text-white/80">Authorized</span>
           </div>
           <p className="mt-2 text-xs text-muted leading-relaxed">
-            {myCustodian.account.hasApproved
+            {hasCurrentApproval
               ? "You have already confirmed this person's death. Awaiting other custodians if quorum is not met."
-              : "Confirm death only if you have verified the owner has passed away and cannot check-in. This action is recorded on the blockchain and cannot be undone."}
+              : `Confirm death only if you have verified the owner has passed away and cannot check in. Your confirmation is recorded publicly on-chain. Once enough custodians confirm, a ${GRACE} grace period begins in which the owner can still revoke it; only after that can heirs claim.`}
           </p>
-          {!myCustodian.account.hasApproved && status !== "claimable" && (
+          {!hasCurrentApproval && status !== "claimable" && (
             <div className="mt-3.5">
               {inactivityWindowExpired ? (
                 <TxButton
                   tone="danger"
-                  confirm="Confirm the will owner's passing? This is permanent and will notify other custodians / enable inheritance claiming."
+                  confirm={`Confirm the will owner's passing? This is recorded on-chain. If it completes the custodian quorum, a ${GRACE} grace period starts in which the owner can revoke it; after that, heirs can claim.`}
                   action={() => vault.confirmDeath(owner)}
-                  onDone={refresh}
+                  onDone={onChanged}
                 >
                   Confirm passing (Death)
                 </TxButton>
               ) : (
                 <p className="text-[11px] text-amber-400/90 leading-relaxed">
                   The owner&apos;s inactivity window has not elapsed yet. Death can
-                  only be confirmed after they have been inactive past their
-                  threshold (eligible{" "}
+                  only be confirmed once they have gone without checking in for
+                  longer than their threshold (eligible{" "}
                   {new Date(eligibleAtMs).toLocaleString()}).
                 </p>
               )}
@@ -122,40 +146,14 @@ export const ActPanelContent: FC<ActPanelContentProps> = ({
         )
       )}
 
-      {/* Beneficiary actions */}
       {myBeneficiary && (
-        <div className="rounded-xl border border-border bg-white/1 p-4">
-          <div className="flex items-center justify-between">
-            <h4 className="text-xs font-semibold text-foreground uppercase tracking-wider">Your Role: Beneficiary</h4>
-            <span className="rounded bg-(--accent)/15 border border-(--accent)/20 px-2 py-0.5 text-[9px] uppercase tracking-wide text-accent">
-              Heir · {myBeneficiary.account.allocationPercentage / 100}% share
-            </span>
-          </div>
-          
-          {!claimable ? (
-            <p className="mt-2 text-xs text-muted leading-relaxed">
-              The will is currently active. You can claim your inheritance allocation once enough custodians submit passing confirmations and the inactivity window expires.
-            </p>
-          ) : myBeneficiary.account.hasClaimed ? (
-            <p className="mt-2 text-xs text-neon font-medium">
-              Inheritance claimed successfully. You can now access and preview all the sealed documents below.
-            </p>
-          ) : (
-            <div className="mt-3">
-              <TxButton
-                action={() => vault.claimInheritance(owner)}
-                onDone={refresh}
-              >
-                Claim inheritance & decrypt files
-              </TxButton>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Media access list (Only for verified beneficiaries once claimable) */}
-      {claimable && myBeneficiary && (
-        <InheritedDocumentsList media={data.media} />
+        <BeneficiaryActions
+          owner={owner}
+          data={data}
+          beneficiary={myBeneficiary.account}
+          timeline={timeline}
+          onChanged={onChanged}
+        />
       )}
     </div>
   );

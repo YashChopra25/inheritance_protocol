@@ -4,6 +4,8 @@ import { AsciiArt } from "@/app/components/fx/AsciiArt";
 import { MARK_CHAIN } from "@/app/components/fx/artwork";
 import { ScrambleText, ScrambleZone } from "@/app/components/fx/ScrambleText";
 import { Logo } from "./Logo";
+import { CLUSTER, PROGRAM_ID, explorerUrl } from "@/lib/config";
+import { short } from "@/lib/utils";
 
 /** Only destinations that actually exist. Anything without a page behind it
  *  is worse than a shorter footer. */
@@ -70,8 +72,15 @@ export function Footer() {
       <div className="flex flex-col items-start justify-between gap-3 border-t border-border px-5 py-5 label-mono sm:flex-row sm:items-center sm:px-8">
         <p>© 2026 VaultWill Labs — not legal advice.</p>
         <p>
-          Built on Solana · devnet program{" "}
-          <span className="text-foreground">VWiLLpr0t…aZ8</span>
+          Built on Solana · {CLUSTER} program{" "}
+          <a
+            href={explorerUrl(PROGRAM_ID.toBase58())}
+            target="_blank"
+            rel="noreferrer"
+            className="text-foreground underline-offset-2 hover:underline"
+          >
+            {short(PROGRAM_ID)}
+          </a>
         </p>
       </div>
     </footer>

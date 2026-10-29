@@ -6,10 +6,12 @@ import type {
   LockState,
 } from "@/app/types/inheritance.types";
 import { formatRelativeDuration } from "@/lib/utils";
+import { CLAIM_WINDOW_SECONDS, GRACE_PERIOD_SECONDS } from "@/lib/config";
 
 /**
- * Mirrors `constants.rs`. Reaching custodian quorum does NOT release the estate;
- * two windows run back-to-back from `will.claimable_at`:
+ * Reaching custodian quorum does NOT release the estate; two windows (defined
+ * once in `lib/config.ts`, mirroring `constants.rs`) run back-to-back from
+ * `will.claimable_at`:
  *
  *   quorum reached ──┬── GRACE_PERIOD ──┬── CLAIM_WINDOW ──┬── teardown
  *                    │ owner may still  │ heirs claim      │ anyone may close
@@ -22,8 +24,6 @@ import { formatRelativeDuration } from "@/lib/utils";
  * teardown crank. Neither deadline is visible on-chain to the user, so the UI
  * has to derive and show them.
  */
-export const GRACE_PERIOD_SECONDS = 7 * 24 * 60 * 60;
-export const CLAIM_WINDOW_SECONDS = 90 * 24 * 60 * 60;
 
 /** Inside this much of the claim deadline, the UI escalates to a warning. */
 export const CLOSING_SOON_SECONDS = 14 * 24 * 60 * 60;
@@ -96,6 +96,16 @@ export function claimTimeline(
     canClaimNow: phase === "open",
     closingSoon: phase === "open" && secondsUntilClose <= CLOSING_SOON_SECONDS,
   };
+}
+
+/**
+ * Whether an heir's documents can be fetched yet. Mirrors `isEntitledHeir` in
+ * `lib/server/authz.ts`: Claimable AND the grace period over — the same moment
+ * `require_claims_open` opens on-chain. During grace the owner may still
+ * revoke, so the server returns 403 and the UI must not offer the documents.
+ */
+export function documentsReadable(timeline: ClaimTimeline): boolean {
+  return timeline.phase === "open" || timeline.phase === "closed";
 }
 
 function noteFor(

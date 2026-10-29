@@ -31,7 +31,6 @@ const FilesPage: FC = () => {
 
       <div className="rounded-2xl border border-border bg-white/[0.02] p-6 glass-strong">
         <MediaManager
-          will={will}
           refresh={refresh}
           media={data?.media ?? []}
           isActive={isActive}

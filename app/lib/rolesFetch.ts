@@ -1,6 +1,12 @@
 import { PublicKey } from "@solana/web3.js";
 import type { VaultProgram } from "@/lib/anchor";
 import { willStatusLabel } from "@/lib/utils";
+import {
+  allTolerant,
+  type BeneficiaryAccount,
+  type CustodianAccount,
+  type WillAccount,
+} from "@/lib/willFetch";
 import type { MyRoles, RoleWill } from "@/app/types/roles.types";
 
 // On both child accounts the layout is: 8-byte discriminator, `will` pubkey (32),
@@ -32,21 +38,36 @@ export async function fetchMyRoles(
   const filter = [
     { memcmp: { offset: WALLET_OFFSET, bytes: wallet.toBase58() } },
   ];
+  // Tolerant decoding (see `allTolerant`): one account left on an older layout
+  // must not blank every role this wallet holds.
   const [beneficiaries, custodians] = await Promise.all([
-    program.account.beneficiary.all(filter),
-    program.account.custodian.all(filter),
+    allTolerant<BeneficiaryAccount>(program, "beneficiary", filter),
+    allTolerant<CustodianAccount>(program, "custodian", filter),
   ]);
 
-  // Fetch each referenced will once to read its owner + status.
+  // Fetch each referenced will once to read its owner + status, decoding each
+  // on its own for the same reason.
   const willKeys = Array.from(
     new Set(
       [...beneficiaries, ...custodians].map((c) => c.account.will.toBase58()),
     ),
   ).map((s) => new PublicKey(s));
-  const wills = await program.account.will.fetchMultiple(willKeys);
-  const willMap = new Map(
-    willKeys.map((k, i) => [k.toBase58(), wills[i]] as const),
-  );
+  const infos = await program.provider.connection.getMultipleAccountsInfo(willKeys);
+  const willMap = new Map<string, WillAccount>();
+  infos.forEach((info, i) => {
+    if (!info || !info.owner.equals(program.programId)) return;
+    try {
+      willMap.set(
+        willKeys[i].toBase58(),
+        program.coder.accounts.decode<WillAccount>("will", info.data),
+      );
+    } catch (e) {
+      console.warn(
+        `[rolesFetch] skipping will ${willKeys[i].toBase58()} — stale layout:`,
+        e instanceof Error ? e.message : String(e),
+      );
+    }
+  });
 
   const enrich = (
     will: PublicKey,
@@ -78,7 +99,14 @@ export async function fetchMyRoles(
       )
       .filter((w): w is RoleWill => w !== null),
     custodianWills: custodians
-      .map((c) => enrich(c.account.will, { hasApproved: c.account.hasApproved }))
+      .map((c) => {
+        // A confirmation from a revoked round (older approval epoch) is void.
+        const will = willMap.get(c.account.will.toBase58());
+        return enrich(c.account.will, {
+          hasApproved:
+            c.account.hasApproved && c.account.approvedEpoch === will?.approvalEpoch,
+        });
+      })
       .filter((w): w is RoleWill => w !== null),
   };
 }

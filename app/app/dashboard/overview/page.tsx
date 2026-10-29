@@ -12,7 +12,7 @@ import { WillSetupChecklist } from "@/app/components/dashboard/shared/WillSetupC
 import { useRouter } from "next/navigation";
 
 const OverviewPage: FC = () => {
-  const { data, vault, status, readiness } = useDashboard();
+  const { data, vault, status, readiness, refresh } = useDashboard();
   const router = useRouter();
   const will = data?.will ?? null;
 
@@ -38,7 +38,7 @@ const OverviewPage: FC = () => {
         {!readiness.canAddAssets && (
           <WillSetupChecklist readiness={readiness} action="add anything to it" />
         )}
-        <WillOverview data={data!} />
+        <WillOverview data={data!} refresh={refresh} />
         <LifecycleFlow />
         <ContextFlowDiagram />
       </div>
@@ -46,7 +46,7 @@ const OverviewPage: FC = () => {
       <div className="flex flex-col gap-6 lg:sticky lg:top-20">
         <div className="rounded-2xl border border-border bg-white/[0.01] p-4 glass overflow-hidden flex flex-col items-center">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)] self-start mb-2 pl-1">
-            Active Vault Visualizer
+            Vault Read-out
           </h3>
           <div className="w-full scale-95 sm:scale-100 origin-center">
             <VaultVisual
@@ -67,8 +67,9 @@ const OverviewPage: FC = () => {
             Trustless Architecture
           </h3>
           <p className="mt-2.5 text-xs text-muted leading-relaxed">
-            No third party can modify your will settings or preview files. All
-            data flows peer-to-peer and through decentralized networks.
+            Only your wallet can change these settings. Documents are encrypted
+            in your browser before upload, so this app&apos;s server and the
+            IPFS pinning service only ever hold ciphertext.
           </p>
         </div>
       </div>
