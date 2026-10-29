@@ -3,9 +3,12 @@
 import { useCallback, useEffect } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { useVault } from "./useVault";
-import { useAppDispatch, useAppSelector } from "@/app/store/hooks";
+import { useAppDispatch, useAppSelector, useAppStore } from "@/app/store/hooks";
 import { loadMyRoles } from "@/app/store/rolesSlice";
 import type { MyRoles } from "@/app/types/roles.types";
+
+/** How long a loaded roles list is trusted before a mount re-fetches it. */
+const STALE_MS = 15_000;
 
 interface UseMyRolesResult {
   data: MyRoles;
@@ -23,6 +26,7 @@ interface UseMyRolesResult {
 export function useMyRoles(): UseMyRolesResult {
   const { program, publicKey } = useVault();
   const dispatch = useAppDispatch();
+  const store = useAppStore();
   const wallet = publicKey?.toBase58() ?? null;
 
   const { data, status, error } = useAppSelector((s) => s.roles);
@@ -32,10 +36,24 @@ export function useMyRoles(): UseMyRolesResult {
     await dispatch(loadMyRoles({ program, wallet: new PublicKey(wallet) }));
   }, [dispatch, program, wallet]);
 
+  // Several components on one page use this hook; only the first mount should
+  // fetch. Read the cache imperatively so a landing result cannot re-trigger
+  // the effect that fetched it. `refresh()` always re-reads.
   useEffect(() => {
     if (!wallet) return;
+    const cached = store.getState().roles;
+    if (cached.wallet === wallet) {
+      if (cached.status === "loading") return;
+      if (
+        cached.status === "ready" &&
+        cached.fetchedAt !== null &&
+        Date.now() - cached.fetchedAt < STALE_MS
+      ) {
+        return;
+      }
+    }
     dispatch(loadMyRoles({ program, wallet: new PublicKey(wallet) }));
-  }, [dispatch, program, wallet]);
+  }, [dispatch, store, program, wallet]);
 
   return { data, loading: status === "loading", error, refresh };
 }

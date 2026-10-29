@@ -1,31 +1,25 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC } from "react";
+import { useNow } from "@/hooks/useNow";
 import { TxButton } from "../shared/ui";
 
 interface CountdownTrackerProps {
   lastInactivity: number;
   threshold: number;
   onCheckIn: () => Promise<string>;
+  /** Re-read the will after a check-in, so the countdown restarts on screen. */
+  onCheckedIn?: () => void;
 }
 
 export const CountdownTracker: FC<CountdownTrackerProps> = ({
   lastInactivity,
   threshold,
   onCheckIn,
+  onCheckedIn,
 }) => {
-  const [now, setNow] = useState<number>(0);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setNow(Date.now()), 0);
-    const interval = setInterval(() => {
-      setNow(Date.now());
-    }, 1000);
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
-  }, []);
+  const nowSecs = useNow();
+  const now = nowSecs === null ? 0 : nowSecs * 1000;
 
   const totalWindowMs = threshold * 1000;
   const elapsedMs = now > 0 ? Math.max(now - lastInactivity * 1000, 0) : 0;
@@ -80,7 +74,9 @@ export const CountdownTracker: FC<CountdownTrackerProps> = ({
           </span>
         </div>
 
-        <TxButton action={onCheckIn}>Reset Timer (Check In)</TxButton>
+        <TxButton action={onCheckIn} onDone={onCheckedIn}>
+          Reset Timer (Check In)
+        </TxButton>
       </div>
 
       <div className="mt-4 flex items-end justify-between gap-4">

@@ -7,6 +7,8 @@ import { SealedDocumentRow } from "./SealedDocumentRow";
 import { DocumentFilterBar } from "./DocumentFilterBar";
 import { useSealedDocuments } from "@/hooks/useSealedDocuments";
 import { RefreshCw, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import type { HeirKeyInfo } from "@/lib/recipients";
+import { SignInPrompt } from "./SignInPrompt";
 
 interface SealedDocumentsListProps {
   media: {
@@ -14,14 +16,15 @@ interface SealedDocumentsListProps {
     account: { mediaIndex: number; ipfsCid: number[]; mediaType: number[] };
   }[];
   isActive: boolean;
-  onRemove: (index: number) => Promise<string>;
+  /** Heirs with a registered key. */
+  keyedHeirs: HeirKeyInfo[];
   refresh: () => void;
 }
 
 export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
   media,
   isActive,
-  onRemove,
+  keyedHeirs,
   refresh,
 }) => {
   const [previewItem, setPreviewItem] = useState<{ cid: string; type: string } | null>(null);
@@ -32,21 +35,11 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
     dateRange,
     setDateRange,
     sortOrder,
-    setSortOrder,
     filteredMedia,
     hasFilters,
     clearFilters,
+    toggleSort,
   } = useSealedDocuments(media);
-
-  const toggleSort = () => {
-    if (sortOrder === "newest") {
-      setSortOrder("oldest");
-    } else if (sortOrder === "oldest") {
-      setSortOrder("index");
-    } else {
-      setSortOrder("newest");
-    }
-  };
 
   return (
     <div className="mt-2 space-y-4">
@@ -63,6 +56,8 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
           </button>
         )}
       </div>
+
+      {media.length > 0 && <SignInPrompt what="document labels, sizes and dates" />}
 
       <DocumentFilterBar
         searchTerm={searchTerm}
@@ -92,10 +87,10 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
                   Size
                 </th>
                 <th
-                  onClick={toggleSort}
-                  className="w-32 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-foreground hidden sm:table-cell cursor-pointer select-none transition-colors"
+                  aria-sort={sortOrder === "newest" ? "descending" : sortOrder === "oldest" ? "ascending" : "none"}
+                  className="w-32 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60 hover:text-foreground hidden sm:table-cell select-none transition-colors"
                 >
-                  <div className="flex items-center gap-1.5">
+                  <button type="button" onClick={toggleSort} className="flex items-center gap-1.5 uppercase tracking-wider cursor-pointer">
                     <span>Sealed Date</span>
                     {sortOrder === "newest" ? (
                       <ArrowDown className="size-3 text-[var(--accent)]" />
@@ -104,7 +99,7 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
                     ) : (
                       <ArrowUpDown className="size-3 opacity-30 hover:opacity-100 transition-opacity" />
                     )}
-                  </div>
+                  </button>
                 </th>
                 <th className="w-32 py-3 px-4 text-[10px] font-semibold uppercase tracking-wider text-white/60">
                   CID
@@ -121,7 +116,7 @@ export const SealedDocumentsList: FC<SealedDocumentsListProps> = ({
                     key={mediaItem.publicKey.toBase58()}
                     mediaItem={mediaItem}
                     isActive={isActive}
-                    onRemove={onRemove}
+                    keyedHeirs={keyedHeirs}
                     onPreview={(cid, type) => setPreviewItem({ cid, type })}
                     refresh={refresh}
                   />

@@ -17,7 +17,7 @@ const features = [
   {
     tag: "TIMER",
     title: "Inactivity dead-man's switch",
-    body: "Set the window that arms your will. Custodians can only confirm once you have gone quiet; staying active keeps everything sealed.",
+    body: "Set the window that arms your will. Custodians can only confirm once you have stopped checking in; each check-in resets the timer.",
   },
   {
     tag: "SPLITS",
@@ -32,7 +32,7 @@ const features = [
   {
     tag: "COST",
     title: "Solana-fast and cheap",
-    body: "Sealing, confirming and claiming each cost a fraction of a cent. Account rent is refunded when a will is closed.",
+    body: "Sealing, confirming and claiming each cost a small network fee. Account rent is refunded when a will is closed.",
   },
 ];
 
@@ -42,7 +42,7 @@ export function Features() {
       <SectionHead
         eyebrow="Built for keeps"
         title="Everything a will should be — and nothing it shouldn't."
-        aside="Six guarantees, each one enforced by the program rather than promised by us."
+        aside="The release rules are enforced by the program rather than promised by us. File storage and delivery still rely on this app's server."
       />
 
       <div className="border-t border-border">

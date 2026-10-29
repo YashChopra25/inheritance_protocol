@@ -3,23 +3,50 @@
 import { FC } from "react";
 import { Coins, Check } from "lucide-react";
 import type { UserTokenInfo } from "@/hooks/useTokenBalances";
+import { NATIVE_MINT } from "@/lib/anchor";
+import { formatUnits } from "@/lib/tokens";
+
+const NATIVE_MINT_STR = NATIVE_MINT.toBase58();
 
 interface UserTokenListProps {
   userTokens: UserTokenInfo[];
+  /** Native SOL balance in lamports; null until loaded. */
+  solLamports: number | null;
   onSelect: (mint: string) => void;
   selectedMint: string;
 }
 
 export const UserTokenList: FC<UserTokenListProps> = ({
-  userTokens,
+  userTokens: allTokens,
+  solLamports,
   onSelect,
   selectedMint,
 }) => {
+  // Native SOL and an existing wSOL balance are one choice: selecting either
+  // escrows the native mint, wrapping only what the wSOL balance lacks.
+  const wsol = allTokens.find((t) => t.mint === NATIVE_MINT_STR);
+  const solRow: UserTokenInfo | null =
+    solLamports && solLamports > 0
+      ? {
+        mint: NATIVE_MINT_STR,
+        symbol: "SOL",
+        name: "Native SOL (escrowed as wSOL)",
+        decimals: 9,
+        balance:
+          formatUnits(BigInt(solLamports), 9) +
+          (wsol ? ` + ${wsol.balance} wSOL` : ""),
+        rawBalance: String(solLamports),
+      }
+      : null;
+  const userTokens = solRow
+    ? [solRow, ...allTokens.filter((t) => t.mint !== NATIVE_MINT_STR)]
+    : allTokens;
+
   if (userTokens.length === 0) {
     return (
       <div className="rounded-xl border border-border bg-black/5 p-4 text-center">
         <Coins className="size-6 text-muted mx-auto opacity-30 mb-1" />
-        <p className="text-[10px] text-muted">No non-zero SPL tokens found in your wallet.</p>
+        <p className="text-[10px] text-muted">No SOL or non-zero SPL tokens found in your wallet.</p>
       </div>
     );
   }
@@ -33,10 +60,12 @@ export const UserTokenList: FC<UserTokenListProps> = ({
         {userTokens.map((t) => {
           const isSelected = selectedMint === t.mint;
           return (
-            <div
+            <button
+              type="button"
               key={t.mint}
               onClick={() => onSelect(t.mint)}
-              className={`flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
+              aria-pressed={isSelected}
+              className={`w-full flex items-center justify-between p-2.5 rounded-xl border transition-all duration-200 cursor-pointer group ${
                 isSelected
                   ? "bg-[var(--accent)]/10 border-[var(--accent)]/30 text-foreground"
                   : "bg-black/15 border-border hover:border-border-strong text-muted hover:text-foreground"
@@ -49,9 +78,11 @@ export const UserTokenList: FC<UserTokenListProps> = ({
                   {t.symbol.substring(0, 3)}
                 </div>
                 <div className="text-left">
-                  <h4 className="text-xs font-semibold">{t.symbol}</h4>
+                  <span className="block text-xs font-semibold">{t.symbol}</span>
                   <span className="text-[9px] opacity-60 font-mono">
-                    {t.mint.slice(0, 4)}…{t.mint.slice(-4)}
+                    {t === solRow
+                      ? "wraps to wSOL"
+                      : `${t.mint.slice(0, 4)}…${t.mint.slice(-4)}`}
                   </span>
                 </div>
               </div>
@@ -59,7 +90,8 @@ export const UserTokenList: FC<UserTokenListProps> = ({
               <div className="flex items-center gap-2.5">
                 <div className="text-right">
                   <div className="text-xs font-mono font-semibold text-foreground">
-                    {parseFloat(t.balance).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 6 })}
+                    {/* The exact UI string from the RPC — no float round-trip. */}
+                    {t.balance}
                   </div>
                   <span className="text-[8px] opacity-50 block">Balance</span>
                 </div>
@@ -71,7 +103,7 @@ export const UserTokenList: FC<UserTokenListProps> = ({
                   <Check className="size-3" />
                 </div>
               </div>
-            </div>
+            </button>
           );
         })}
       </div>

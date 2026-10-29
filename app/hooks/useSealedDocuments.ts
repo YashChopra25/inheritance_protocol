@@ -3,7 +3,9 @@ import { useQueries } from "@tanstack/react-query";
 import { PublicKey } from "@solana/web3.js";
 import { DateRange } from "react-day-picker";
 import { bytesToCid } from "@/lib/anchor";
+import { documentLabel } from "@/lib/documentLabel";
 import { fetchPinataMetadata } from "@/app/services/pinata.service";
+import { useVaultSession } from "./useVaultSession";
 
 interface MediaItem {
   publicKey: PublicKey;
@@ -17,15 +19,19 @@ export function useSealedDocuments(media: MediaItem[]) {
   const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
   const [sortOrder, setSortOrder] = useState<SortOrder>("index");
 
+  // Same cache entries as `usePinataMetadata`; see there for why this waits
+  // for a session instead of signing in.
+  const { wallet, signedIn } = useVaultSession();
   const metadataQueries = useQueries({
     queries: media.map((m) => {
       const cid = bytesToCid(m.account.ipfsCid);
       return {
-        queryKey: ["ipfs-metadata", cid],
+        queryKey: ["ipfs-metadata", cid, wallet],
         queryFn: () => fetchPinataMetadata(cid),
         staleTime: 1000 * 60 * 10,
         // CIDv0 is 46 chars, CIDv1 ~59; just require a non-empty decoded CID.
-        enabled: cid.length > 0,
+        enabled: cid.length > 0 && signedIn,
+        retry: false,
       };
     }),
   });
@@ -37,7 +43,7 @@ export function useSealedDocuments(media: MediaItem[]) {
         metadata: metadataQueries[idx]?.data || null,
       }))
       .filter(({ mediaItem, metadata }) => {
-        const fileName = metadata?.name?.toLowerCase() || "";
+        const fileName = documentLabel(metadata, mediaItem.account.mediaIndex).toLowerCase();
         const cidStr = bytesToCid(mediaItem.account.ipfsCid).toLowerCase();
         const matchesSearch =
           fileName.includes(searchTerm.toLowerCase()) ||
@@ -86,6 +92,10 @@ export function useSealedDocuments(media: MediaItem[]) {
 
   const hasFilters = !!(searchTerm || dateRange?.from || dateRange?.to || sortOrder !== "index");
 
+  /** Cycles the date sort: newest → oldest → on-chain index. */
+  const toggleSort = () =>
+    setSortOrder((o) => (o === "newest" ? "oldest" : o === "oldest" ? "index" : "newest"));
+
   const clearFilters = () => {
     setSearchTerm("");
     setDateRange(undefined);
@@ -102,5 +112,6 @@ export function useSealedDocuments(media: MediaItem[]) {
     filteredMedia,
     hasFilters,
     clearFilters,
+    toggleSort,
   };
 }

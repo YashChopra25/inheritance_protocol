@@ -18,12 +18,57 @@ export function getPinata(): PinataSDK {
   });
 }
 
-/** Resolve a CID to its Pinata file id, or null when it is not pinned here. */
-export async function fileIdForCid(
+/**
+ * Key-value tag recording which wallet pinned a file.
+ *
+ * This is what authorization binds to. The chain cannot answer "who uploaded
+ * this CID": `add_media_reference` accepts any CID bytes, and every CID is
+ * public, so anyone can reference someone else's document from their own will.
+ * The pin record, written server-side under an authenticated session, can.
+ */
+export const UPLOADER_KEY = "vaultOwner";
+
+/**
+ * Deliberately uninformative pin label. The real filename is encrypted inside
+ * the sealed container; anything put here is visible to the pinning provider.
+ */
+export const SEALED_PIN_NAME = "sealed.vseal";
+
+export interface PinRecord {
+  id: string;
+  cid: string;
+  name: string | null;
+  size: number;
+  createdAt: string;
+  /** Wallet that pinned it, or null for legacy pins made before tagging. */
+  uploader: string | null;
+}
+
+/** Every pin record for `cid`. Identical bytes pinned twice yield two records. */
+export async function pinsForCid(
   pinata: PinataSDK,
   cid: string
-): Promise<string | null> {
+): Promise<PinRecord[]> {
   const response = await pinata.files.private.list().cid(cid);
-  const file = response?.files?.[0];
-  return file?.id ?? null;
+  return (response?.files ?? []).map((f) => ({
+    id: f.id,
+    cid: f.cid,
+    name: f.name,
+    size: f.size,
+    createdAt: f.created_at,
+    uploader: f.keyvalues?.[UPLOADER_KEY] ?? null,
+  }));
+}
+
+/** Pin `file` privately, tagged with the wallet that uploaded it. */
+export async function pinSealedFile(
+  pinata: PinataSDK,
+  file: File,
+  wallet: string
+): Promise<string | undefined> {
+  const result = await pinata.upload.private
+    .file(file)
+    .name(SEALED_PIN_NAME)
+    .keyvalues({ [UPLOADER_KEY]: wallet });
+  return result.cid;
 }

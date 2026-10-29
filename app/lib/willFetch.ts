@@ -40,7 +40,7 @@ const WILL_OFFSET = 8;
  * decodes in one pass and rejects the entire batch; here the stale account is
  * skipped and logged instead.
  */
-async function allTolerant<T>(
+export async function allTolerant<T>(
   program: VaultProgram,
   accountName: keyof VaultProgram["account"] & string,
   filters: { memcmp: { offset: number; bytes: string } }[],
@@ -148,4 +148,60 @@ export async function fetchWillBundle(
     },
     failures,
   };
+}
+
+/** What sealing a new document needs, read fresh from the chain. */
+export interface SealingContext {
+  heirs: ProgramItem<BeneficiaryAccount>[];
+  /** The will's next media slot (`media_index`), for `add_media_reference`. */
+  nextMediaIndex: number;
+}
+
+/**
+ * Every heir of `owner`'s will, or an error — never a partial list — plus the
+ * will's current media slot (a cached one goes stale after any other upload
+ * and makes the final transaction fail after the file is already pinned).
+ *
+ * Sealing a document is the one moment an heir's access is decided, and it is
+ * decided for good: a document sealed without them stays closed to them after
+ * the owner is gone. `fetchWillBundle` deliberately degrades (a failed or
+ * undecodable list becomes empty) so the dashboard stays usable; that is the
+ * wrong behaviour here, where "empty" would silently mean "seal to nobody".
+ * So this reads the heirs fresh from the chain, decodes strictly, and checks
+ * the count against the will's own `beneficiary_count` before anyone seals.
+ */
+export async function fetchSealingContext(
+  program: VaultProgram,
+  owner: PublicKey,
+): Promise<SealingContext> {
+  const willKey = willPda(owner);
+  const will = await program.account.will.fetchNullable(willKey, "confirmed");
+  if (!will) throw new Error("Create your will before sealing documents");
+
+  const raw = await program.provider.connection.getProgramAccounts(
+    program.programId,
+    {
+      commitment: "confirmed",
+      encoding: "base64",
+      filters: [
+        { memcmp: program.coder.accounts.memcmp("beneficiary") },
+        { memcmp: { offset: WILL_OFFSET, bytes: willKey.toBase58() } },
+      ],
+    },
+  );
+  const heirs = raw.map(({ pubkey, account }) => ({
+    publicKey: pubkey,
+    account: program.coder.accounts.decode<BeneficiaryAccount>(
+      "beneficiary",
+      account.data,
+    ),
+  }));
+
+  const expected = Number(will.beneficiaryCount);
+  if (heirs.length !== expected) {
+    throw new Error(
+      `Could only load ${heirs.length} of your ${expected} heirs from the network, so this document was not sealed — it would have locked the missing heirs out. Try again in a moment.`,
+    );
+  }
+  return { heirs, nextMediaIndex: will.mediaIndex };
 }

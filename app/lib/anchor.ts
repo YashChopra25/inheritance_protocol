@@ -3,9 +3,14 @@ import type { Wallet } from "@coral-xyz/anchor";
 import {
   Connection,
   PublicKey,
+  SystemProgram,
+  TransactionInstruction,
   type Transaction,
   type VersionedTransaction,
 } from "@solana/web3.js";
+// The browser has no global `Buffer`; this is the polyfill web3.js itself
+// depends on, so it is always installed alongside it.
+import { Buffer } from "buffer";
 import idl from "./idl/vault_inheritance.json";
 import type { VaultInheritance } from "./idl/vault_inheritance";
 import { PROGRAM_ID, SEEDS } from "./config";
@@ -123,6 +128,48 @@ export function getAta(
     [owner.toBuffer(), tokenProgram.toBuffer(), mint.toBuffer()],
     ASSOCIATED_TOKEN_PROGRAM_ID
   )[0];
+}
+
+/** Wrapped SOL. Always owned by the classic Token program. */
+export const NATIVE_MINT = new PublicKey(
+  "So11111111111111111111111111111111111111112"
+);
+
+/**
+ * Associated Token Account program `CreateIdempotent` (discriminator 1):
+ * creates `owner`'s ATA for `mint`, or does nothing if it already exists.
+ * Hand-built because `@solana/spl-token` is not a dependency of this app.
+ */
+export function createAtaIdempotentIx(
+  payer: PublicKey,
+  owner: PublicKey,
+  mint: PublicKey,
+  tokenProgram: PublicKey = TOKEN_PROGRAM_ID
+): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: ASSOCIATED_TOKEN_PROGRAM_ID,
+    keys: [
+      { pubkey: payer, isSigner: true, isWritable: true },
+      { pubkey: getAta(owner, mint, tokenProgram), isSigner: false, isWritable: true },
+      { pubkey: owner, isSigner: false, isWritable: false },
+      { pubkey: mint, isSigner: false, isWritable: false },
+      { pubkey: SystemProgram.programId, isSigner: false, isWritable: false },
+      { pubkey: tokenProgram, isSigner: false, isWritable: false },
+    ],
+    data: Buffer.from([1]),
+  });
+}
+
+/**
+ * Token program `SyncNative` (instruction 17): credits lamports sent to a
+ * wSOL account to its token balance.
+ */
+export function syncNativeIx(account: PublicKey): TransactionInstruction {
+  return new TransactionInstruction({
+    programId: TOKEN_PROGRAM_ID,
+    keys: [{ pubkey: account, isSigner: false, isWritable: true }],
+    data: Buffer.from([17]),
+  });
 }
 
 /**

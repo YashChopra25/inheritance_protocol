@@ -32,27 +32,34 @@ export async function GET(request: Request) {
     const auth = await requireSession();
     if (!auth.ok) return auth.response;
 
-    const limited = rateLimit(`retrieve:${auth.wallet}`, READ_LIMIT);
+    const limited = await rateLimit(`retrieve:${auth.wallet}`, READ_LIMIT);
     if (limited) return limited;
 
     const cid = new URL(request.url).searchParams.get("cid");
     if (!isValidCid(cid)) return invalidCidResponse();
 
+    const pinata = getPinata();
     const access: CidAccess = "read";
-    const decision = await authorizeCid(auth.wallet, cid, access);
+    const decision = await authorizeCid(pinata, auth.wallet, cid, access);
+    if (decision.notPinned) {
+      return NextResponse.json(
+        { error: "That document is not pinned" },
+        { status: 404 }
+      );
+    }
     if (!decision.allowed) {
       return NextResponse.json({ error: decision.reason }, { status: 403 });
     }
 
     // Private pins are fetched through a signed, short-lived gateway URL rather
     // than by attaching the account JWT to a public gateway request.
-    const pinata = getPinata();
     const url = await pinata.gateways.private.createAccessLink({
       cid,
       expires: 60,
     });
 
-    const res = await fetch(url);
+    // Bounded: a hung gateway must not pin a request (and its memory) forever.
+    const res = await fetch(url, { signal: AbortSignal.timeout(30_000) });
     if (!res.ok) {
       console.error(`[ipfs/retrieve] gateway status ${res.status} for ${cid}`);
       return NextResponse.json(

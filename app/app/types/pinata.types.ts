@@ -1,9 +1,10 @@
+/** What `/api/ipfs/metadata` reports: facts about the CIPHERTEXT pin only. */
 export interface PinataFileMetadata {
   id: string;
   cid: string;
-  name: string;
+  /** Operator-visible pin label, not the real (encrypted) filename. */
+  name: string | null;
+  /** Size of the sealed container. */
   size: number;
-  mimeType: string;
   createdAt: string;
-  keyvalues?: Record<string, string>;
 }

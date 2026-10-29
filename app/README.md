@@ -1,5 +1,29 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment
+
+Every variable is documented, with placeholder values, in
+[`.env.example`](./.env.example). Copy it to `.env` and fill it in.
+
+| Variable | Required | Purpose |
+|---|---|---|
+| `SESSION_SECRET` | yes | HMAC key for sign-in challenges and session cookies (≥ 32 chars) |
+| `PINATA_JWT_TOKEN` | yes | Pinata credentials, server-side only |
+| `PINATA_GATEWAY` | yes | Private gateway used to fetch sealed documents |
+| `NEXT_PUBLIC_PROGRAM_ID` | yes | Deployed program address; the app refuses to start without it |
+| `NEXT_PUBLIC_SOLANA_CLUSTER` / `NEXT_PUBLIC_RPC_ENDPOINT` | yes | Must agree with each other (checked at startup). The endpoint ships to the browser — no API keys |
+| `APP_ORIGIN` | recommended | Canonical origin (e.g. `https://vault.example.com`) bound into every sign-in message as the SIWS domain/URI. Unset: the request's Host is used |
+| `SOLANA_RPC_URL` | recommended | Server-only RPC for authorization lookups; use a private endpoint. Falls back to `NEXT_PUBLIC_RPC_ENDPOINT` |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | recommended | Shared store for rate limits, upload quotas, burned sign-in nonces and revoked sessions |
+| `TRUST_PROXY_HEADERS` | no | Set to `true` only behind a reverse proxy that overwrites `X-Forwarded-*`; enables per-IP rate limits and forwarded-host sign-in origins |
+| `MAX_UPLOAD_BYTES_GLOBAL_PER_HOUR` | no | Upload budget across all wallets, in bytes (default 2 GB) |
+
+Without Upstash configured, rate limits, upload quotas, burned sign-in nonces
+and session revocations are held in process memory: they reset on restart and
+are not shared between instances, and production logs a warning saying so.
+With it, each check is an atomic Redis operation, and sign-in fails closed if
+the store is unreachable.
+
 ## Getting Started
 
 First, run the development server:

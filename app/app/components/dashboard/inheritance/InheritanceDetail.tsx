@@ -4,13 +4,14 @@ import { FC } from "react";
 import type { ProgramItem } from "@/hooks/useWill";
 import type { TokenVaultAccount } from "@/hooks/useVault";
 import Link from "next/link";
-import { ArrowLeft, Lock } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useInheritedWill } from "@/hooks/useInheritedWill";
 import { useInheritedTokens } from "@/hooks/useInheritedTokens";
 import { short } from "../shared/ui";
-import { InheritedDocumentsList } from "../intervene/InheritedDocumentsList";
 import { RecipientKeyCard } from "../intervene/RecipientKeyCard";
-import { InheritedTokensList } from "./InheritedTokensList";
+import { InheritedEstateSection } from "./InheritedEstateSection";
+import { WillLoadError } from "../shared/WillLoadError";
+import { useMyRoles } from "@/hooks/useMyRoles";
 import { InheritanceStatusCard } from "./InheritanceStatusCard";
 import { InheritanceClaimCard } from "./InheritanceClaimCard";
 import { ClaimTimelineCard } from "./ClaimTimelineCard";
@@ -43,19 +44,18 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
     error,
     refresh,
   } = useInheritedWill(ownerStr);
-  const {
-    tokenDisplays,
-    loading: loadingTokens,
-    refresh: refreshTokens,
-  } = useInheritedTokens(
+  const tokens = useInheritedTokens(
     data?.tokenVaults ?? NO_TOKEN_VAULTS,
     myBeneficiary?.account.allocationPercentage,
     me,
   );
+  const { refresh: refreshRoles } = useMyRoles();
 
+  // A claim changes this heir's standing in the roles list too.
   const refreshAll = () => {
     refresh();
-    refreshTokens();
+    tokens.refresh();
+    refreshRoles();
   };
 
   const body = () => {
@@ -70,8 +70,8 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
         </div>
       );
     }
-    if (error) {
-      return <p className="py-4 font-mono text-xs text-red-400">{error}</p>;
+    if (error && !data) {
+      return <WillLoadError variant="fatal" message={error} retry={refresh} />;
     }
     if (!owner || !data || !exists || !data.will || !lock || !timeline) {
       return (
@@ -90,13 +90,11 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
       );
     }
 
-    // Documents are readable as soon as the will is claimable; only *claims*
-    // wait for the grace period. Keeping the two apart is the difference
-    // between "your files are here" and a transaction the program rejects.
-    const documentsOpen = lock === "unlocked";
-
     return (
       <div className="flex flex-col gap-5">
+        {error && (
+          <WillLoadError variant="partial" message={error} retry={refresh} />
+        )}
         <InheritanceStatusCard
           owner={owner}
           will={data.will}
@@ -118,34 +116,14 @@ export const InheritanceDetail: FC<InheritanceDetailProps> = ({ ownerStr }) => {
           refresh={refreshAll}
         />
 
-        {documentsOpen ? (
-          <>
-            <InheritedTokensList
-              owner={owner}
-              tokens={tokenDisplays}
-              loading={loadingTokens}
-              canClaim={timeline.canClaimNow}
-              refresh={refreshAll}
-            />
-            <InheritedDocumentsList media={data.media} />
-            <Notice>
-              Documents &amp; media are shared with every heir in full — your
-              percentage only governs your share of the escrowed tokens above.
-            </Notice>
-          </>
-        ) : (
-          <div className="flex items-center gap-3 rounded-xl border border-border bg-black/10 p-4">
-            <Lock className="size-4 shrink-0 text-muted" />
-            <p className="text-xs leading-relaxed text-muted">
-              {data.will.mediaCount} sealed{" "}
-              {data.will.mediaCount === 1 ? "file is" : "files are"} and{" "}
-              {data.tokenVaults.length} token{" "}
-              {data.tokenVaults.length === 1 ? "vault is" : "vaults are"}{" "}
-              attached to this will. They are released here once custodians
-              confirm the owner&apos;s passing.
-            </p>
-          </div>
-        )}
+        <InheritedEstateSection
+          owner={owner}
+          data={data}
+          lock={lock}
+          timeline={timeline}
+          tokens={tokens}
+          refresh={refreshAll}
+        />
       </div>
     );
   };

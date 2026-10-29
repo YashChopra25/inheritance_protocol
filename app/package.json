@@ -9,8 +9,10 @@
     "lint": "eslint",
     "audit": "node scripts/audit-gate.mjs",
     "typecheck": "tsc --noEmit",
-    "verify": "npm run typecheck && npm run lint && npm run audit",
-    "smoke:devnet": "node scripts/devnet-smoke.mjs"
+    "test": "vitest run",
+    "verify": "npm run typecheck && npm run lint && npm test && npm run audit",
+    "smoke:devnet": "node scripts/devnet-smoke.mjs",
+    "watch:deaths": "node scripts/death-watch.mjs"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
@@ -21,11 +23,12 @@
     "@solana/web3.js": "^1.98.4",
     "@tanstack/react-query": "^5.101.0",
     "bs58": "^6.0.0",
+    "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "date-fns": "^4.4.0",
     "lucide-react": "^1.21.0",
-    "next": "^16.3.1",
+    "next": "^16.4.3",
     "pinata": "^2.5.6",
     "radix-ui": "^1.6.0",
     "react": "19.2.4",
@@ -43,9 +46,15 @@
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19",
     "eslint": "^9",
-    "eslint-config-next": "^16.3.1",
+    "eslint-config-next": "^16.4.3",
     "shadcn": "^4.18.0",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^3.2.7"
+  },
+  "overrides": {
+    "browserslist": "^4.29.4",
+    "shell-quote": "^1.12.0",
+    "source-map-js": "^1.2.2"
   }
 }

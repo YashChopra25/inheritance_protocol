@@ -1,6 +1,7 @@
 "use client";
 
-import { FC, useEffect, useState } from "react";
+import { FC, useState } from "react";
+import { useNow } from "@/hooks/useNow";
 import { toast } from "sonner";
 import { ShieldAlert } from "lucide-react";
 import { useVault, type WillAccount } from "@/hooks/useVault";
@@ -47,15 +48,11 @@ export const DeathConfirmationBanner: FC<DeathConfirmationBannerProps> = ({
 }) => {
   const vault = useVault();
   const [busy, setBusy] = useState(false);
-  const [now, setNow] = useState(() => Math.floor(Date.now() / 1000));
+  // A live countdown on the shared clock: the deadline is the whole point of
+  // the banner, but minute resolution is all the "2d 4h" read-out needs.
+  const now = useNow(60_000);
 
-  // A live countdown: the deadline is the whole point of the banner.
-  useEffect(() => {
-    const id = setInterval(() => setNow(Math.floor(Date.now() / 1000)), 30_000);
-    return () => clearInterval(id);
-  }, []);
-
-  if (!will) return null;
+  if (!will || now === null) return null;
   const status = statusName(will.willStatus);
   if (status === "active") return null;
 

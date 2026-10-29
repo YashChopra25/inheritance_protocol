@@ -5,10 +5,10 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import {
   getAta,
-  resolveTokenProgram,
   TOKEN_PROGRAM_ID,
   TOKEN_2022_PROGRAM_ID,
 } from "@/lib/anchor";
+import { fetchMintInfo, tokenMeta } from "@/lib/tokens";
 import type { TokenVaultDisplay } from "@/app/types/token.types";
 import type { ProgramItem } from "./useWill";
 import type { TokenVaultAccount } from "./useVault";
@@ -18,15 +18,11 @@ export interface UserTokenInfo {
   symbol: string;
   name: string;
   decimals: number;
+  /** UI-formatted balance, for display only. */
   balance: string;
+  /** Exact balance in raw base units (decimal string), for comparisons. */
+  rawBalance: string;
 }
-
-const COMMON_TOKENS: Record<string, { symbol: string; name: string; decimals: number }> = {
-  "So11111111111111111111111111111111111111112": { symbol: "wSOL", name: "Wrapped SOL", decimals: 9 },
-  "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v": { symbol: "USDC", name: "USD Coin", decimals: 6 },
-  "Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB": { symbol: "USDT", name: "Tether USDT", decimals: 6 },
-  "DezXAZ8z7PnrnRJjz3wXh3tRe6J3gBChcumHGg3bGz56": { symbol: "BONK", name: "Bonk Token", decimals: 5 },
-};
 
 /** Stable empty array so the derived "nothing to show" case never re-renders. */
 const NONE: never[] = [];
@@ -63,19 +59,18 @@ export function useTokenBalances(
           const mint = parsedInfo.mint;
           const decimals = parsedInfo.tokenAmount.decimals;
           const balance = parsedInfo.tokenAmount.uiAmountString || "0";
-          const common = COMMON_TOKENS[mint] || {
-            symbol: mint.slice(0, 4).toUpperCase() + "…",
-            name: "SPL Token",
-          };
+          const rawBalance: string = parsedInfo.tokenAmount.amount ?? "0";
+          const meta = tokenMeta(mint);
           return {
             mint,
-            symbol: common.symbol,
-            name: common.name,
+            symbol: meta.symbol,
+            name: meta.name,
             decimals,
             balance,
+            rawBalance,
           };
         })
-        .filter((t) => parseFloat(t.balance) > 0);
+        .filter((t) => BigInt(t.rawBalance) > BigInt(0));
       return tokens;
     }
   }, [userWallet, connection]);
@@ -88,24 +83,13 @@ export function useTokenBalances(
       const displays: TokenVaultDisplay[] = await Promise.all(
         tokenVaults.map(async (v) => {
           const mintStr = v.account.tokenMint.toBase58();
-          const info = COMMON_TOKENS[mintStr] || {
-            symbol: mintStr.slice(0, 4).toUpperCase() + "…",
-            name: "SPL Token",
-            decimals: 9,
-          };
-
-          let decimals = info.decimals;
-          try {
-            const mintInfo = await connection.getParsedAccountInfo(v.account.tokenMint);
-            const mintData = mintInfo.value?.data;
-            const parsed =
-              mintData && "parsed" in mintData ? mintData.parsed : null;
-            if (parsed && parsed.type === "mint") {
-              decimals = parsed.info.decimals;
-            }
-          } catch (e) {
-            console.error("Failed to fetch mint decimals for", mintStr, e);
-          }
+          const info = tokenMeta(mintStr);
+          // Decimals and the owning token program both come from the mint.
+          // There is no guessed fallback: a wrong decimals value misstates the
+          // escrow by orders of magnitude, so a failed read fails the query and
+          // surfaces as `error` instead.
+          const mintInfo = await fetchMintInfo(connection, v.account.tokenMint);
+          const decimals = mintInfo.decimals;
 
           let vaultBalance = "0";
           try {
@@ -118,13 +102,13 @@ export function useTokenBalances(
           let userBalance = "0";
           if (userWallet) {
             try {
-              // M7: Token-2022 mints derive a different ATA, so ask the chain
-              // which program owns this mint rather than assuming the legacy one.
-              const tokenProgram = await resolveTokenProgram(
-                connection,
-                v.account.tokenMint
+              // M7: Token-2022 mints derive a different ATA, so use the
+              // program that actually owns this mint.
+              const userAta = getAta(
+                userWallet,
+                v.account.tokenMint,
+                mintInfo.tokenProgram
               );
-              const userAta = getAta(userWallet, v.account.tokenMint, tokenProgram);
               const userBalRes = await connection.getTokenAccountBalance(userAta);
               userBalance = userBalRes.value.uiAmountString ?? "0";
             } catch {
@@ -162,6 +146,15 @@ export function useTokenBalances(
     staleTime: 30_000,
   });
 
+  // Native SOL is not an SPL account, so it is read separately; the escrow
+  // form offers to wrap it (see `useVault.escrowNativeSol`).
+  const solQuery = useQuery({
+    queryKey: ["solBalance", walletKey],
+    queryFn: () => (userWallet ? connection.getBalance(userWallet) : 0),
+    enabled: !!userWallet,
+    staleTime: 30_000,
+  });
+
   const vaultQuery = useQuery({
     queryKey: ["tokenVaultBalances", vaultKey, walletKey],
     queryFn: fetchVaultDisplays,
@@ -172,6 +165,7 @@ export function useTokenBalances(
   const refreshBalances = useCallback(async () => {
     await Promise.all([
       queryClient.invalidateQueries({ queryKey: ["userTokens", walletKey] }),
+      queryClient.invalidateQueries({ queryKey: ["solBalance", walletKey] }),
       queryClient.invalidateQueries({
         queryKey: ["tokenVaultBalances", vaultKey, walletKey],
       }),
@@ -181,7 +175,10 @@ export function useTokenBalances(
   return {
     vaultDisplays: vaultQuery.data ?? NONE,
     userTokens: userTokensQuery.data ?? NONE,
+    /** Native SOL balance in lamports; null until loaded. */
+    solLamports: solQuery.data ?? null,
     loading: userTokensQuery.isFetching || vaultQuery.isFetching,
+    error: vaultQuery.error ?? userTokensQuery.error ?? null,
     refreshBalances,
   };
 }

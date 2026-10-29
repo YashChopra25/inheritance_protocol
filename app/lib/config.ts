@@ -28,11 +28,15 @@ export const PROGRAM_ID = requiredProgramId();
 
 export type Cluster = "devnet" | "mainnet-beta" | "testnet" | "localnet";
 
-export const CLUSTER = (process.env.NEXT_PUBLIC_SOLANA_CLUSTER?.trim() ??
+// `||`, not `??`: an empty variable (`FOO=` in a .env) must fall back too.
+export const CLUSTER = (process.env.NEXT_PUBLIC_SOLANA_CLUSTER?.trim() ||
   "devnet") as Cluster;
+if (!["devnet", "mainnet-beta", "testnet", "localnet"].includes(CLUSTER)) {
+  throw new Error(`NEXT_PUBLIC_SOLANA_CLUSTER is not a known cluster: ${CLUSTER}`);
+}
 
 export const RPC_ENDPOINT =
-  process.env.NEXT_PUBLIC_RPC_ENDPOINT?.trim() ??
+  process.env.NEXT_PUBLIC_RPC_ENDPOINT?.trim() ||
   "https://api.devnet.solana.com";
 
 /**

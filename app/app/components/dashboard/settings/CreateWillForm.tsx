@@ -3,6 +3,15 @@
 import { FC, useState } from "react";
 import { useVault } from "@/hooks/useVault";
 import { Field, Input, TxButton } from "../shared/ui";
+import { CLUSTER } from "@/lib/config";
+import {
+  MAX_MIN_APPROVALS,
+  MAX_THRESHOLD_DAYS,
+  MIN_THRESHOLD_DAYS,
+  SECS_PER_DAY,
+  minApprovalsError,
+  thresholdDaysError,
+} from "./willParams";
 
 interface CreateWillFormProps {
   refresh: () => void;
@@ -13,6 +22,10 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
   const [days, setDays] = useState("365");
   const [minApproval, setMinApproval] = useState("1");
 
+  const daysErr = thresholdDaysError(days);
+  const approvalErr = minApprovalsError(minApproval);
+  const invalid = daysErr !== null || approvalErr !== null;
+
   return (
     <div className="flex flex-col gap-5">
       <div>
@@ -21,7 +34,7 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
         </h3>
         <p className="mt-1 text-xs text-muted leading-relaxed">
           Start securing your digital legacy. A will is a Program Derived
-          Address (PDA) on the Solana devnet.
+          Address (PDA) on Solana {CLUSTER === "mainnet-beta" ? "mainnet" : CLUSTER}.
         </p>
       </div>
 
@@ -30,10 +43,14 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
           How it works
         </h4>
         <p className="mt-2 text-xs text-muted leading-relaxed">
-          When your Solana account goes inactivity for longer than your threshold,
-          named custodians can confirm your passing. Once the threshold is met,
-          heirs (beneficiaries) can claim their allocated shares and unlock your
-          sealed IPFS documents.
+          If you don&apos;t check in for longer than your threshold, named
+          custodians can confirm your passing. Only an explicit check-in (or a
+          settings update) from this dashboard counts — ordinary wallet
+          activity such as transfers or trades does not reset the timer. Once
+          enough custodians confirm and a 7-day grace period (in which you can
+          still cancel) has passed, heirs (beneficiaries) can claim their
+          allocated shares and open any sealed documents that were encrypted
+          to them.
         </p>
       </div>
 
@@ -41,28 +58,46 @@ export const CreateWillForm: FC<CreateWillFormProps> = ({ refresh }) => {
         <Field label="Inactivity threshold (days)">
           <Input
             type="number"
-            min={1}
+            min={MIN_THRESHOLD_DAYS}
+            max={MAX_THRESHOLD_DAYS}
+            step={1}
             value={days}
             onChange={(e) => setDays(e.target.value)}
             placeholder="e.g. 365"
+            aria-invalid={daysErr !== null}
           />
+          {daysErr && (
+            <span role="alert" className="text-[11px] text-danger">
+              {daysErr}
+            </span>
+          )}
         </Field>
         <Field label="Required custodian approvals">
           <Input
             type="number"
             min={1}
+            max={MAX_MIN_APPROVALS}
+            step={1}
             value={minApproval}
             onChange={(e) => setMinApproval(e.target.value)}
             placeholder="e.g. 2"
+            aria-invalid={approvalErr !== null}
           />
+          {approvalErr && (
+            <span role="alert" className="text-[11px] text-danger">
+              {approvalErr}
+            </span>
+          )}
         </Field>
       </div>
       <div className="mt-2">
         <TxButton
+          disabled={invalid}
+          title={invalid ? "Fix the highlighted fields first" : undefined}
           action={() =>
             vault.createWill(
-              Math.max(1, Number(days)) * 86_400,
-              Math.max(1, Number(minApproval))
+              Number(days.trim()) * SECS_PER_DAY,
+              Number(minApproval.trim())
             )
           }
           onDone={refresh}

@@ -1,14 +1,17 @@
 "use client";
 
 import { FC, useState } from "react";
-import { Coins, ExternalLink, RefreshCw, AlertCircle, Trash2, X } from "lucide-react";
-import { explorerTxUrl, short } from "../shared/ui";
+import { Coins, ExternalLink, RefreshCw, AlertCircle } from "lucide-react";
+import { explorerTxUrl } from "../shared/ui";
+import { VaultRow } from "./TokenVaultRow";
 import type { TokenVaultDisplay } from "@/app/types/token.types";
 
 interface TokenVaultListProps {
   tokenVaultsCount: number;
   vaultDisplays: TokenVaultDisplay[];
   loadingBalances: boolean;
+  /** Set when vault balances could not be read from the chain. */
+  loadError: string | null;
   refreshBalances: () => void;
   hasOwnerKey: boolean;
   isActive: boolean;
@@ -22,6 +25,7 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
   tokenVaultsCount,
   vaultDisplays,
   loadingBalances,
+  loadError,
   refreshBalances,
   hasOwnerKey,
   isActive,
@@ -53,6 +57,7 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
           disabled={loadingBalances}
           className="p-1.5 rounded-lg hover:bg-white/5 transition-colors text-muted hover:text-foreground"
           title="Refresh balances"
+          aria-label="Refresh balances"
         >
           <RefreshCw
             className={`size-3.5 ${loadingBalances ? "animate-spin" : ""}`}
@@ -60,6 +65,11 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
         </button>
       </div>
 
+      {loadError && (
+        <p role="alert" className="text-[11px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-2">
+          Could not load vault balances: {loadError}
+        </p>
+      )}
       {removeError && (
         <p className="text-[11px] text-red-400 bg-red-400/10 border border-red-400/20 rounded-lg p-2">
           {removeError}
@@ -81,6 +91,8 @@ export const TokenVaultList: FC<TokenVaultListProps> = ({
 
       {tokenVaultsCount === 0 ? (
         <EmptyState />
+      ) : vaultDisplays.length === 0 && loadingBalances ? (
+        <p className="text-xs text-muted">Loading vault balances…</p>
       ) : (
         <div className="space-y-2.5 max-h-[300px] overflow-y-auto pr-1">
           {vaultDisplays.map((v) => (
@@ -126,120 +138,3 @@ const InfoFooter: FC = () => (
     </p>
   </div>
 );
-
-interface VaultRowProps {
-  vault: TokenVaultDisplay;
-  hasOwnerKey: boolean;
-  isActive: boolean;
-  isConfirming: boolean;
-  removing: boolean;
-  onRequestDelete: () => void;
-  onCancelDelete: () => void;
-  onConfirmDelete: () => void;
-}
-
-const VaultRow: FC<VaultRowProps> = ({
-  vault: v,
-  hasOwnerKey,
-  isActive,
-  isConfirming,
-  removing,
-  onRequestDelete,
-  onCancelDelete,
-  onConfirmDelete,
-}) => (
-  <div className="flex items-center justify-between p-3 rounded-xl border border-border bg-black/10 hover:border-border-strong transition-all text-xs">
-    <div className="space-y-1">
-      <div className="flex items-center gap-1.5">
-        <span className="font-semibold text-foreground">{v.symbol}</span>
-        <span className="text-[10px] text-muted">{v.name}</span>
-      </div>
-      <div className="text-[9px] text-muted font-mono flex items-center gap-1">
-        <span>Vault PDA: {short(v.publicKey)}</span>
-        <a
-          href={explorerTxUrl(v.publicKey.toBase58())}
-          target="_blank"
-          rel="noreferrer"
-          className="hover:text-foreground"
-        >
-          <ExternalLink className="size-2.5" />
-        </a>
-      </div>
-    </div>
-
-    <div className="flex items-center gap-3">
-      <div className="text-right space-y-0.5">
-        <div className="font-semibold font-mono text-[var(--accent)]">
-          {v.vaultBalance} {v.symbol}
-        </div>
-        {hasOwnerKey && (
-          <div className="text-[9px] text-muted font-mono">
-            Your Wallet: {v.userBalance} {v.symbol}
-          </div>
-        )}
-      </div>
-
-      {hasOwnerKey && isActive && (
-        <DeleteButton
-          isConfirming={isConfirming}
-          removing={removing}
-          onRequest={onRequestDelete}
-          onCancel={onCancelDelete}
-          onConfirm={onConfirmDelete}
-        />
-      )}
-    </div>
-  </div>
-);
-
-interface DeleteButtonProps {
-  isConfirming: boolean;
-  removing: boolean;
-  onRequest: () => void;
-  onCancel: () => void;
-  onConfirm: () => void;
-}
-
-const DeleteButton: FC<DeleteButtonProps> = ({
-  isConfirming,
-  removing,
-  onRequest,
-  onCancel,
-  onConfirm,
-}) => {
-  if (isConfirming) {
-    return (
-      <div className="flex items-center gap-1.5">
-        <button
-          onClick={onConfirm}
-          disabled={removing}
-          className="flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-semibold bg-red-500/20 border border-red-500/30 text-red-300 hover:bg-red-500/30 transition-all disabled:opacity-50 cursor-pointer"
-        >
-          {removing ? (
-            <RefreshCw className="size-3 animate-spin" />
-          ) : (
-            <Trash2 className="size-3" />
-          )}
-          {removing ? "Deleting…" : "Confirm"}
-        </button>
-        <button
-          onClick={onCancel}
-          disabled={removing}
-          className="p-1.5 rounded-lg hover:bg-white/5 text-muted hover:text-foreground transition-colors cursor-pointer"
-        >
-          <X className="size-3" />
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <button
-      onClick={onRequest}
-      title="Delete escrow and withdraw tokens"
-      className="p-1.5 rounded-lg hover:bg-red-500/10 text-muted hover:text-red-400 transition-all cursor-pointer"
-    >
-      <Trash2 className="size-4" />
-    </button>
-  );
-};

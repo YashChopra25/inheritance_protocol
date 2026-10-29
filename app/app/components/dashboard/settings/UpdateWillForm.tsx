@@ -5,13 +5,19 @@ import { useVault } from "@/hooks/useVault";
 import { useDashboard } from "@/hooks/useDashboard";
 import { Field, Input, TxButton } from "../shared/ui";
 import { humanizeThreshold } from "./CurrentWillSettings";
+import {
+  MAX_MIN_APPROVALS,
+  MAX_THRESHOLD_DAYS,
+  MIN_THRESHOLD_DAYS,
+  SECS_PER_DAY,
+  minApprovalsError,
+  thresholdDaysError,
+} from "./willParams";
 
 interface UpdateWillFormProps {
   refresh: () => void;
   isActive: boolean;
 }
-
-const SECS_PER_DAY = 86_400;
 
 export const UpdateWillForm: FC<UpdateWillFormProps> = ({
   refresh,
@@ -37,8 +43,25 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
   const days = daysEdit ?? String(currentDays);
   const minApproval = minApprovalEdit ?? String(currentMinApprovals);
 
-  const nextSecs = days === "" ? null : Math.round(Number(days) * SECS_PER_DAY);
-  const nextMinApprovals = minApproval === "" ? null : Number(minApproval);
+  // Only an edited field is validated: an untouched one shows the on-chain
+  // value, which may legitimately be a fractional number of days.
+  const daysErr = daysEdit === null ? null : thresholdDaysError(daysEdit);
+  const custodianCount = will?.custodianCount ?? 0;
+  // `update_will` rejects a minimum above the custodian count once any
+  // custodian exists (`MinApprovalsExceedCustodians`); with none it is allowed.
+  const approvalErr =
+    minApprovalEdit === null
+      ? null
+      : (minApprovalsError(minApprovalEdit) ??
+        (custodianCount > 0 && Number(minApprovalEdit.trim()) > custodianCount
+          ? `Cannot exceed your ${custodianCount} named ${custodianCount === 1 ? "custodian" : "custodians"}.`
+          : null));
+  const invalid = daysErr !== null || approvalErr !== null;
+
+  const nextSecs =
+    daysEdit === null || daysErr ? null : Number(days.trim()) * SECS_PER_DAY;
+  const nextMinApprovals =
+    minApprovalEdit === null || approvalErr ? null : Number(minApproval.trim());
 
   // Only send what actually changed: `update_will` treats a null argument as
   // "leave this field alone", and re-sending an identical value would be a
@@ -47,10 +70,6 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
   const approvalsChanged =
     nextMinApprovals !== null && nextMinApprovals !== currentMinApprovals;
   const dirty = thresholdChanged || approvalsChanged;
-
-  const invalid =
-    (nextSecs !== null && nextSecs < 1) ||
-    (nextMinApprovals !== null && nextMinApprovals < 1);
 
   const revert = () => {
     setDaysEdit(null);
@@ -64,18 +83,26 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
           <Field label="Inactivity threshold (days)">
             <Input
               type="number"
-              min={1}
+              min={MIN_THRESHOLD_DAYS}
+              max={MAX_THRESHOLD_DAYS}
+              step={1}
               value={days}
               onChange={(e) => setDaysEdit(e.target.value)}
               disabled={!isActive}
+              aria-invalid={daysErr !== null}
             />
+            {daysErr && (
+              <span role="alert" className="text-[11px] text-danger">
+                {daysErr}
+              </span>
+            )}
           </Field>
           <p className="mt-1 text-[11px] text-muted">
             Currently{" "}
             <span className="text-white/80">
               {humanizeThreshold(currentSecs)}
             </span>
-            {thresholdChanged && nextSecs !== null && nextSecs >= 1 && (
+            {thresholdChanged && nextSecs !== null && (
               <>
                 {" → "}
                 <span className="text-[var(--accent)]">
@@ -91,10 +118,18 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
             <Input
               type="number"
               min={1}
+              max={MAX_MIN_APPROVALS}
+              step={1}
               value={minApproval}
               onChange={(e) => setMinApprovalEdit(e.target.value)}
               disabled={!isActive}
+              aria-invalid={approvalErr !== null}
             />
+            {approvalErr && (
+              <span role="alert" className="text-[11px] text-danger">
+                {approvalErr}
+              </span>
+            )}
           </Field>
           <p className="mt-1 text-[11px] text-muted">
             Currently{" "}
@@ -110,9 +145,11 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
           title={
             !isActive
               ? "Actions are only allowed when the will is active"
-              : !dirty
-                ? "Change a value first"
-                : ""
+              : invalid
+                ? "Fix the highlighted fields first"
+                : !dirty
+                  ? "Change a value first"
+                  : ""
           }
           action={() =>
             vault.updateWill(
@@ -129,7 +166,7 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
         </TxButton>
       </div>
 
-      {dirty && (
+      {(dirty || invalid) && (
         <button
           type="button"
           onClick={revert}
@@ -139,12 +176,12 @@ export const UpdateWillForm: FC<UpdateWillFormProps> = ({
         </button>
       )}
 
-      {/* `min_approvals` above `custodian_count` is accepted by `update_will`,
-          but it makes the will unable to take on any new asset until more
-          custodians are named — worth saying before the transaction, not after. */}
+      {/* With no custodians yet, `update_will` accepts any minimum, but the
+          will then cannot take on any asset until enough custodians are named
+          — worth saying before the transaction, not after. */}
       {approvalsChanged &&
         nextMinApprovals !== null &&
-        nextMinApprovals > (will?.custodianCount ?? 0) && (
+        custodianCount === 0 && (
           <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-3 py-2 text-[11px] leading-relaxed text-amber-200/85">
             {nextMinApprovals} approvals is more than the{" "}
             {will?.custodianCount ?? 0}{" "}

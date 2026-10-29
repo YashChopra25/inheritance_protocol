@@ -22,7 +22,7 @@ export function FinalCta() {
 
         <p className="mt-8 max-w-xl text-[15px] leading-relaxed text-muted">
           <ScrambleText
-            text="Connect a wallet, seal your documents, name your heirs and custodians. Stay active and nothing moves — go silent and your will does exactly what you wrote."
+            text="Connect a wallet, seal your documents, name your heirs and custodians. Keep checking in and nothing moves — go silent and your will follows the rules you set."
             speed={180}
           />
         </p>
@@ -46,12 +46,12 @@ export function FinalCta() {
         <div className="mt-12 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 label-mono">
           <span className="inline-flex items-center gap-2">
             <span className="size-1.5 rounded-full bg-neon" />
-            Devnet open · mainnet Q3
+            Devnet only · test funds
           </span>
           <span className="text-faint">/</span>
-          <span>Audits: OtterSec, Neodyme</span>
+          <span>Not yet audited</span>
           <span className="text-faint">/</span>
-          <span>Source on Solana Explorer</span>
+          <span>Open-source program</span>
         </div>
       </div>
     </section>

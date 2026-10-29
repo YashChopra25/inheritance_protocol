@@ -38,8 +38,9 @@ export const InheritanceClaimCard: FC<InheritanceClaimCardProps> = ({
       </div>
 
       <p className="mt-1 text-[10px] leading-relaxed text-muted">
-        Your {sharePct}% share applies to escrowed tokens. All documents &amp;
-        media are shared with every heir in full.
+        Your {sharePct}% share applies to escrowed tokens. Documents are not
+        split: you can open, in full, every document that was sealed after you
+        registered your encryption key.
       </p>
 
       {/* Every branch below mirrors a guard in `claim_inheritance`, so the

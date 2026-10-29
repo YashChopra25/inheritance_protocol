@@ -1,6 +1,6 @@
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
-import { CLUSTER } from "./config"
+import { explorerUrl } from "./config"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -14,13 +14,47 @@ export function formatBytes(bytes: number) {
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + " " + sizes[i];
 }
 
+/**
+ * Explorer link for a transaction. Delegates to `explorerUrl`, which knows
+ * that Explorer has no `localnet` cluster and needs a custom RPC URL instead.
+ */
 export function explorerTxUrl(sig: string): string {
-  const cluster = CLUSTER === "mainnet-beta" ? "" : `?cluster=${CLUSTER}`;
-  return `https://explorer.solana.com/tx/${sig}${cluster}`;
+  return explorerUrl(sig, "tx");
+}
+
+/**
+ * The transaction was sent but its outcome is unknown: confirmation timed out
+ * or the blockhash expired while waiting. It may well have landed, so treating
+ * this as an ordinary failure invites a retry that runs the action twice.
+ */
+export function isUncertainTxError(e: unknown): boolean {
+  if (!(e instanceof Error)) return false;
+  if (
+    e.name === "TransactionExpiredBlockheightExceededError" ||
+    e.name === "TransactionExpiredTimeoutError"
+  ) {
+    return true;
+  }
+  return /block height exceeded|was not confirmed in|failed to confirm in/i.test(
+    e.message
+  );
+}
+
+/** The signature carried by web3.js's expiry errors, when there is one. */
+export function txSignatureOf(e: unknown): string | null {
+  const sig = (e as { signature?: unknown } | null)?.signature;
+  return typeof sig === "string" && sig.length > 0 ? sig : null;
 }
 
 export function humanizeError(e: unknown): string {
+  if (isUncertainTxError(e)) {
+    return "The network did not confirm this transaction in time. It may still have gone through — check the current state before trying again.";
+  }
   if (e instanceof Error) {
+    // A retried `init` whose first attempt actually landed.
+    if (/already in use/i.test(e.message)) {
+      return "This was already done — an earlier attempt most likely went through. Refresh to see it.";
+    }
     // Anchor wraps program errors; surface the readable message if present.
     const m = e.message;
     const match = m.match(/Error Message: (.+?)\./);

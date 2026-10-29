@@ -22,7 +22,7 @@ const links = [
   { href: "/dashboard/beneficiaries", label: "Beneficiaries", icon: Users },
   { href: "/dashboard/files", label: "Files & Documents", icon: FolderOpen },
   { href: "/dashboard/custodians", label: "Custodians", icon: ShieldCheck },
-  { href: "/dashboard/assets", label: "SOL & Tokens", icon: Coins },
+  { href: "/dashboard/assets", label: "Tokens", icon: Coins },
   { href: "/dashboard/inheritance", label: "My Inheritance", icon: Gift },
   { href: "/dashboard/intervene", label: "Intervene & Claim", icon: Key },
   { href: "/dashboard/settings", label: "Will Settings", icon: Settings },
@@ -86,8 +86,16 @@ export const DashboardSidebar: FC<DashboardSidebarProps> = ({ onClose }) => {
         </div>
         {will && (
           <div className="mt-2.5 flex items-center gap-2">
-            <span className="size-1.5 rounded-full bg-neon" />
-            <span className="font-mono text-[11px] capitalize text-neon">
+            <span
+              className={`size-1.5 rounded-full ${
+                "active" in will.willStatus ? "bg-neon" : "bg-danger"
+              }`}
+            />
+            <span
+              className={`font-mono text-[11px] capitalize ${
+                "active" in will.willStatus ? "text-neon" : "text-danger"
+              }`}
+            >
               {Object.keys(will.willStatus)[0]} will
             </span>
           </div>

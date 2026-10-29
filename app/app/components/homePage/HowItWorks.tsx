@@ -10,7 +10,7 @@ const steps = [
   {
     n: "01",
     title: "Seal your will",
-    body: "Upload documents, keys and messages to IPFS, name beneficiaries with their allocation splits, and set your inactivity window — all on-chain.",
+    body: "Upload documents, keys and messages to IPFS, name beneficiaries with their allocation splits, and set your inactivity window. The rules live on-chain; the encrypted files live on IPFS.",
     bullets: ["Encrypted files on IPFS", "Weighted beneficiary splits", "Inactivity timer you choose"],
     paint: paintSealedDocs,
   },
@@ -24,7 +24,7 @@ const steps = [
   {
     n: "03",
     title: "Heirs inherit",
-    body: "Once you have gone inactive and the quorum confirms, the will turns claimable. Each beneficiary signs to unlock the payload — no executor, no intermediary.",
+    body: "Once you stop checking in, the quorum confirms and the grace period ends, the will turns claimable. Each beneficiary signs to unlock the payload — no executor, no intermediary.",
     bullets: ["Contract-enforced release", "Per-beneficiary claim", "Access to sealed documents"],
     paint: paintKey,
   },
@@ -36,7 +36,7 @@ export function HowItWorks() {
       <SectionHead
         eyebrow="How it works"
         title="Three steps. One signature each."
-        blurb="VaultWill replaces lawyers, paperwork and goodwill with a program that releases exactly what you sealed, to exactly who you named, exactly when your custodians confirm."
+        blurb="VaultWill replaces lawyers, paperwork and goodwill with a program that releases exactly what you sealed, to exactly who you named, once your custodians confirm and your grace period to revoke has passed."
       />
 
       <div className="grid grid-cols-1 border-t border-border md:grid-cols-3">

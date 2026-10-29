@@ -37,13 +37,30 @@ const DATA_KEY_BYTES = 32;
 const GCM_IV_BYTES = 12;
 
 /**
+ * Largest document the browser will seal. Mirrors the server's
+ * `MAX_UPLOAD_BYTES` (25 MB on the sealed container) minus headroom for the
+ * header and GCM tags, so an oversized file is refused before it is read into
+ * memory and encrypted rather than after the upload is rejected.
+ */
+export const MAX_DOCUMENT_BYTES = 25 * 1024 * 1024 - 64 * 1024;
+
+/**
  * Domain-separated message the owner/heir signs to derive their X25519 identity.
  *
  * Ed25519 signatures from Solana wallets are deterministic (RFC 8032), so the
  * same wallet always reproduces the same key material without anything being
- * stored anywhere. The domain string is versioned so the key can be rotated
- * deliberately later, and is specific enough that a signature collected by
- * another dapp can never be replayed into this derivation.
+ * stored anywhere — for wallets that follow RFC 8032. Some (MPC / embedded)
+ * wallets do not, so registration signs twice and refuses a key that does not
+ * reproduce (see `deriveRecipientKeypair`), and every new container records the
+ * recipient's public key so a later mismatch is diagnosed instead of reported
+ * as "not sealed to you".
+ *
+ * The text is versioned and deliberately unchanged: altering a single byte
+ * would change every registered key and orphan every document already sealed.
+ * Note what it cannot do: any site can ask a wallet to sign these exact bytes
+ * and so learn the key. A plain `signMessage` cannot be bound to an origin; the
+ * UI therefore only ever requests it from this app's own pages, and a v2
+ * derivation should move to a wallet-verified Sign-In-With-Solana domain.
  */
 export const KEY_DERIVATION_MESSAGE =
   "vault-inheritance: derive document encryption key (v1)\n\n" +
@@ -67,6 +84,20 @@ interface SealedKey {
   n: string;
   /** The sealed data key, base64. */
   k: string;
+  /**
+   * Recipient's X25519 public key, base64. Optional: containers sealed before
+   * it was recorded omit it. Lets re-sealing compare by key rather than by
+   * wallet label (an heir who rotated their key must be re-sealed), and lets a
+   * failed open explain *why* it failed.
+   */
+  pk?: string;
+}
+
+/** A recipient as recorded in a container header. */
+export interface SealedRecipientInfo {
+  wallet: string;
+  /** Base64 X25519 public key, or null for containers that predate it. */
+  publicKey: string | null;
 }
 
 interface SealHeader {
@@ -139,13 +170,29 @@ function bufferSource(bytes: Uint8Array): ArrayBuffer {
  * key and cannot be replayed as one.
  */
 export async function deriveRecipientKeypair(
-  signMessage: (msg: Uint8Array) => Promise<Uint8Array>
+  signMessage: (msg: Uint8Array) => Promise<Uint8Array>,
+  options: { verifyDeterministic?: boolean } = {}
 ): Promise<RecipientKeypair> {
-  const signature = await signMessage(
-    new TextEncoder().encode(KEY_DERIVATION_MESSAGE)
-  );
+  const message = new TextEncoder().encode(KEY_DERIVATION_MESSAGE);
+  const signature = await signMessage(message);
   if (!signature || signature.length < 32) {
     throw new Error("Wallet returned an unusable signature");
+  }
+  // A key published on-chain must be reproducible forever: documents are
+  // sealed to it and the heir re-derives it at claim time, possibly years
+  // later. A wallet that signs non-deterministically would publish a key it can
+  // never derive again, silently locking the heir out. Signing twice catches
+  // that before anything is published.
+  if (options.verifyDeterministic) {
+    const again = await signMessage(message);
+    const same =
+      again.length === signature.length &&
+      again.every((b, i) => b === signature[i]);
+    if (!same) {
+      throw new Error(
+        "This wallet produces a different signature each time, so it cannot hold a stable document key. Use a wallet with standard (deterministic) message signing, such as a browser-extension wallet."
+      );
+    }
   }
   const seed = nacl.hash(signature).slice(0, DATA_KEY_BYTES);
   const pair = nacl.box.keyPair.fromSecretKey(seed);
@@ -171,6 +218,13 @@ export async function sealFile(
   file: File,
   recipients: Recipient[]
 ): Promise<Uint8Array> {
+  if (file.size > MAX_DOCUMENT_BYTES) {
+    throw new Error(
+      `File is too large. The limit is ${Math.floor(
+        MAX_DOCUMENT_BYTES / (1024 * 1024)
+      )} MB.`
+    );
+  }
   if (recipients.length === 0) {
     throw new Error(
       "A document needs at least one recipient. Register your encryption key first."
@@ -231,6 +285,7 @@ export async function sealFile(
       epk: b64.enc(ephemeral.publicKey),
       n: b64.enc(nonce),
       k: b64.enc(boxed),
+      pk: b64.enc(r.encryptionPublicKey),
     };
   });
 
@@ -285,22 +340,7 @@ export async function unsealFile(
   identity: RecipientKeypair,
   wallet: string
 ): Promise<UnsealedFile> {
-  if (!isSealed(container)) {
-    throw new Error("This file is not in the vault's sealed format");
-  }
-  let o = MAGIC_BYTES.length;
-  const headerLen = readU32le(container, o);
-  o += 4;
-  if (headerLen <= 0 || o + headerLen > container.length) {
-    throw new Error("Sealed file is corrupt: bad header length");
-  }
-  const header: SealHeader = JSON.parse(
-    new TextDecoder().decode(container.subarray(o, o + headerLen))
-  );
-  o += headerLen;
-  if (header.v !== 1) {
-    throw new Error(`Unsupported sealed-file version ${header.v}`);
-  }
+  const { header, bodyOffset: o } = parseHeader(container);
 
   // Prefer the copy addressed to this wallet, then try the rest: a wallet may
   // hold a key that was sealed under a different address label.
@@ -323,6 +363,15 @@ export async function unsealFile(
     }
   }
   if (!dataKey) {
+    // Distinguish "you were never a recipient" from "you were, but your wallet
+    // no longer derives the key it was sealed to" — the second is a wallet
+    // problem the user can act on, not an access decision.
+    const mine = header.r.find((s) => s.w === wallet && s.pk);
+    if (mine && mine.pk !== b64.enc(identity.publicKey)) {
+      throw new Error(
+        "This document was sealed to your wallet, but your wallet now produces a different document key than the one it was sealed to. This happens with wallets that do not sign deterministically; open it with the same wallet software you registered with."
+      );
+    }
     throw new Error(
       "This document was not sealed to your wallet, so it cannot be opened here."
     );
@@ -359,20 +408,43 @@ export async function unsealFile(
   return { bytes, name: meta.name, mime: meta.mime };
 }
 
-/** Wallets a sealed container can be opened by — surfaced in the UI for diagnostics. */
-export function sealedRecipients(container: Uint8Array): string[] {
-  if (!isSealed(container)) return [];
+function parseHeader(container: Uint8Array): {
+  header: SealHeader;
+  bodyOffset: number;
+} {
+  if (!isSealed(container)) {
+    throw new Error("This file is not in the vault's sealed format");
+  }
+  let o = MAGIC_BYTES.length;
+  if (container.length < o + 4) {
+    throw new Error("Sealed file is corrupt: truncated header");
+  }
+  const headerLen = readU32le(container, o);
+  o += 4;
+  if (headerLen <= 0 || o + headerLen > container.length) {
+    throw new Error("Sealed file is corrupt: bad header length");
+  }
+  const header: SealHeader = JSON.parse(
+    new TextDecoder().decode(container.subarray(o, o + headerLen))
+  );
+  if (header.v !== 1 || !Array.isArray(header.r)) {
+    throw new Error(`Unsupported sealed-file version ${header.v}`);
+  }
+  return { header, bodyOffset: o + headerLen };
+}
+
+/** Base64 of an X25519 public key, in the form container headers record it. */
+export function encodePublicKey(key: Uint8Array): string {
+  return b64.enc(key);
+}
+
+/** Recipients a sealed container can be opened by, with their keys when recorded. */
+export function sealedRecipients(container: Uint8Array): SealedRecipientInfo[] {
   try {
-    const headerLen = readU32le(container, MAGIC_BYTES.length);
-    const header: SealHeader = JSON.parse(
-      new TextDecoder().decode(
-        container.subarray(
-          MAGIC_BYTES.length + 4,
-          MAGIC_BYTES.length + 4 + headerLen
-        )
-      )
-    );
-    return header.r.map((s) => s.w);
+    return parseHeader(container).header.r.map((s) => ({
+      wallet: s.w,
+      publicKey: s.pk ?? null,
+    }));
   } catch {
     return [];
   }

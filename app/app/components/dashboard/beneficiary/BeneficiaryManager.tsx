@@ -179,9 +179,10 @@ export const BeneficiaryManager: FC<BeneficiaryManagerProps> = ({
         <div className="rounded-lg border border-[var(--accent)]/20 bg-[var(--accent)]/5 p-3 text-[11px] leading-relaxed text-[var(--accent)]">
           <span className="font-semibold">Heads up:</span> this percentage sets
           the heir&apos;s share of your{" "}
-          <span className="font-semibold">escrowed tokens only</span>. All
-          uploaded documents &amp; media are shared with every beneficiary in
-          full, regardless of percentage.
+          <span className="font-semibold">escrowed tokens only</span>. Documents
+          are not split: each one can be opened in full by every heir who had
+          registered an encryption key when you sealed it. Heirs who register
+          later cannot open documents sealed before then.
         </div>
 
         <TxButton

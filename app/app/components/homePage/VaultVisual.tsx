@@ -1,91 +1,68 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { PublicKey } from "@solana/web3.js";
 import { DotField } from "@/app/components/fx/DotField";
 import { ScrambleText } from "@/app/components/fx/ScrambleText";
 import { paintVaultWheel } from "@/app/components/fx/artwork";
+import { useNow } from "@/hooks/useNow";
 
 interface VaultVisualProps {
-  ownerKey?: PublicKey | null;
-  status?: string;
-  mediaCount?: number;
-  beneficiaryCount?: number;
-  lastInactivity?: number;
-  inactivityThreshold?: number;
-  firstCid?: string | null;
-  firstBeneficiary?: PublicKey | null;
+  ownerKey: PublicKey | null;
+  status: string;
+  mediaCount: number;
+  beneficiaryCount: number;
+  lastInactivity: number;
+  inactivityThreshold: number;
+  firstCid: string | null;
+  firstBeneficiary: PublicKey | null;
 }
+
+const shortKey = (k: string) => `${k.slice(0, 4)}…${k.slice(-4)}`;
 
 /**
  * The vault read-out: a dot-matrix wheel that scatters under the pointer over
  * a hairline ledger of the will's live state.
+ *
+ * Every value is real. This used to fall back to sample data ("9xVu…kP1" as
+ * the first heir, "cid pinned", a fixed countdown) whenever a field was empty,
+ * which on the owner's own dashboard read as an heir and a document that did
+ * not exist.
  */
 export function VaultVisual({
   ownerKey,
-  status = "active",
-  mediaCount = 8,
-  beneficiaryCount = 3,
+  status,
+  mediaCount,
+  beneficiaryCount,
   lastInactivity,
   inactivityThreshold,
   firstCid,
   firstBeneficiary,
 }: VaultVisualProps) {
-  const [now, setNow] = useState<number>(0);
+  // Minute resolution: the read-out only shows days, hours and minutes.
+  const nowSecs = useNow(60_000);
 
-  useEffect(() => {
-    const timer = setTimeout(() => setNow(Date.now()), 0);
-    const interval = setInterval(() => setNow(Date.now()), 1000);
-    return () => {
-      clearTimeout(timer);
-      clearInterval(interval);
-    };
-  }, []);
-
-  const displayOwner = ownerKey
-    ? `${ownerKey.toBase58().slice(0, 4)}…${ownerKey.toBase58().slice(-4)}`
-    : "7H4q…wQ2P";
-
-  let timerText = "03d 14h 22m";
-  let progressPct = 62;
+  const displayOwner = ownerKey ? shortKey(ownerKey.toBase58()) : "—";
   const isClaimable = status === "claimable";
 
-  if (
-    lastInactivity !== undefined &&
-    inactivityThreshold !== undefined &&
-    !isClaimable
-  ) {
-    const totalWindowMs = inactivityThreshold * 1000;
-    const elapsedMs = now > 0 ? Math.max(now - lastInactivity * 1000, 0) : 0;
-    const remainingMs = Math.max(totalWindowMs - elapsedMs, 0);
-    const progress =
-      totalWindowMs > 0 ? Math.min(elapsedMs / totalWindowMs, 1) : 0;
-    progressPct = Math.round((1 - progress) * 100);
-
-    if (remainingMs <= 0) {
-      timerText = "00d 00h 00m";
-    } else {
-      const totalSec = Math.floor(remainingMs / 1000);
-      const d = Math.floor(totalSec / 86400);
-      const h = Math.floor((totalSec % 86400) / 3600);
-      const m = Math.floor((totalSec % 3600) / 60);
-      const pad = (n: number) => n.toString().padStart(2, "0");
-      timerText = `${pad(d)}d ${pad(h)}h ${pad(m)}m`;
-    }
-  } else if (isClaimable) {
+  let timerText = "—";
+  let progressPct = 0;
+  if (isClaimable) {
     timerText = "00d 00h 00m";
-    progressPct = 0;
+  } else if (nowSecs !== null) {
+    const remaining = Math.max(lastInactivity + inactivityThreshold - nowSecs, 0);
+    const elapsed = Math.max(nowSecs - lastInactivity, 0);
+    const progress =
+      inactivityThreshold > 0 ? Math.min(elapsed / inactivityThreshold, 1) : 0;
+    progressPct = Math.round((1 - progress) * 100);
+    const d = Math.floor(remaining / 86400);
+    const h = Math.floor((remaining % 86400) / 3600);
+    const m = Math.floor((remaining % 3600) / 60);
+    const pad = (n: number) => n.toString().padStart(2, "0");
+    timerText = `${pad(d)}d ${pad(h)}h ${pad(m)}m`;
   }
 
-  const ipfsText = firstCid
-    ? `${firstCid.slice(0, 6)}…${firstCid.slice(-4)}`
-    : "cid pinned";
-
-  const heirText = firstBeneficiary
-    ? `${firstBeneficiary.toBase58().slice(0, 4)}…${firstBeneficiary
-        .toBase58()
-        .slice(-4)}`
-    : "9xVu…kP1";
+  const ipfsText = firstCid ? `${firstCid.slice(0, 6)}…${firstCid.slice(-4)}` : "none yet";
+  const heirText = firstBeneficiary ? shortKey(firstBeneficiary.toBase58()) : "none yet";
 
   const barColor = isClaimable
     ? "var(--danger)"
@@ -95,7 +72,7 @@ export function VaultVisual({
 
   const rows: [string, string][] = [
     ["Owner", displayOwner],
-    ["Sealed", `${mediaCount} documents`],
+    ["Sealed", `${mediaCount} ${mediaCount === 1 ? "document" : "documents"}`],
     ["Beneficiaries", String(beneficiaryCount)],
     ["First CID", ipfsText],
     ["First heir", heirText],
